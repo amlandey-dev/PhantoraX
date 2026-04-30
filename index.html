@@ -595,6 +595,89 @@
     pointer-events:none;
   }
   .input-with-prefix .form-input{padding-left:30px;}
+
+  /* ── HOST / JOIN BUTTONS ── */
+  .btn-host{
+    background:linear-gradient(135deg,#00d4ff,#0077aa);
+    color:#000;font-weight:800;letter-spacing:0.08em;
+    border:none;
+    box-shadow:0 4px 18px rgba(0,212,255,0.28);
+  }
+  .btn-host:hover{filter:brightness(1.12);box-shadow:0 6px 28px rgba(0,212,255,0.45);}
+  .btn-join{
+    background:linear-gradient(135deg,#7c3aed,#a855f7);
+    color:#fff;font-weight:800;letter-spacing:0.08em;
+    border:none;
+    box-shadow:0 4px 18px rgba(124,58,237,0.3);
+  }
+  .btn-join:hover{filter:brightness(1.12);box-shadow:0 6px 28px rgba(124,58,237,0.48);}
+
+  /* ── ROOM MODE TOGGLE ── */
+  .room-mode-toggle{
+    display:grid;grid-template-columns:1fr 1fr;
+    background:var(--bg2);border-radius:12px;padding:4px;
+    margin-bottom:22px;gap:4px;
+  }
+  .room-mode-btn{
+    padding:10px;text-align:center;border-radius:9px;cursor:pointer;
+    font-size:0.82rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--text3);transition:all var(--transition);user-select:none;
+    border:1px solid transparent;
+  }
+  .room-mode-btn.active-host{
+    background:rgba(0,212,255,0.1);color:var(--accent);
+    border-color:rgba(0,212,255,0.3);box-shadow:0 2px 10px rgba(0,212,255,0.1);
+  }
+  .room-mode-btn.active-join{
+    background:rgba(124,58,237,0.12);color:#a78bfa;
+    border-color:rgba(124,58,237,0.3);box-shadow:0 2px 10px rgba(124,58,237,0.1);
+  }
+  .room-mode-btn:hover:not(.active-host):not(.active-join){color:var(--text2);}
+
+  /* ── ROOM CODE DISPLAY ── */
+  .room-code-display{
+    background:var(--bg2);border:1px solid rgba(0,212,255,0.25);
+    border-radius:var(--radius-sm);padding:14px 16px;
+    display:flex;align-items:center;justify-content:space-between;
+    margin-top:8px;
+  }
+  .room-code-value{
+    font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700;
+    letter-spacing:0.2em;color:var(--accent);
+  }
+  .copy-btn{
+    background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);
+    border-radius:6px;padding:5px 12px;cursor:pointer;
+    font-size:0.75rem;font-weight:700;color:var(--accent);
+    letter-spacing:0.05em;text-transform:uppercase;transition:all var(--transition);
+  }
+  .copy-btn:hover{background:rgba(0,212,255,0.2);}
+
+  /* ── JOIN PREVIEW CARD ── */
+  .join-preview{
+    background:linear-gradient(135deg,rgba(124,58,237,0.1),rgba(0,212,255,0.06));
+    border:1px solid rgba(124,58,237,0.3);border-radius:var(--radius-sm);
+    padding:14px 16px;margin-top:10px;
+    display:flex;align-items:center;gap:12px;
+    animation:fadeIn 0.25s ease;
+  }
+  .join-preview-icon{font-size:1.6rem;}
+  .join-preview-name{font-weight:700;font-size:1rem;color:var(--text);}
+  .join-preview-meta{font-size:0.8rem;color:var(--text2);margin-top:2px;}
+
+  /* ── PASSWORD INPUT ── */
+  .pw-input-wrap{position:relative;}
+  .pw-toggle{
+    position:absolute;right:12px;top:50%;transform:translateY(-50%);
+    cursor:pointer;color:var(--text3);font-size:0.9rem;
+    transition:color var(--transition);user-select:none;
+  }
+  .pw-toggle:hover{color:var(--accent);}
+  .pw-input-wrap .form-input{padding-right:40px;font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;}
+
+  /* ── HOST FIELDS PANEL ── */
+  #mg-host-fields{transition:opacity 0.2s;}
+  #mg-join-fields{transition:opacity 0.2s;}
 </style>
 </head>
 <body>
@@ -654,8 +737,8 @@
       </div>
       <div class="quick-actions">
         <div class="qa-btn" onclick="openCreateGroup()">
-          <div class="qa-icon">🏘️</div>
-          <div class="qa-label">New Group</div>
+          <div class="qa-icon">🔑</div>
+          <div class="qa-label">Host / Join</div>
         </div>
         <div class="qa-btn" onclick="goView('add-expense')">
           <div class="qa-icon">➕</div>
@@ -680,7 +763,7 @@
           <div class="sec-title">My Groups</div>
           <div class="sec-sub">Manage your expense groups</div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openCreateGroup()">+ New</button>
+        <button class="btn btn-primary btn-sm" onclick="openCreateGroup()">🔑 Host / Join</button>
       </div>
       <div id="groups-list"></div>
     </div>
@@ -814,44 +897,94 @@
   </nav>
 </div><!-- /app -->
 
-<!-- MODAL: Create/Edit Group -->
+<!-- MODAL: Create/Join Group (Room System) -->
 <div class="modal-overlay hidden" id="modal-group">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title" id="modal-group-title">Create Group</div>
+      <div class="modal-title" id="modal-group-title">Group Room</div>
       <div class="modal-close" onclick="closeModal('modal-group')">✕</div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Group Name</label>
-      <input type="text" class="form-input" id="mg-name" placeholder="Trip to Goa, Roommates..." maxlength="40"/>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Emoji / Icon</label>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="emoji-picker">
-        <span class="chip" onclick="selectEmoji('🏖️')">🏖️</span>
-        <span class="chip" onclick="selectEmoji('🏠')">🏠</span>
-        <span class="chip" onclick="selectEmoji('🍕')">🍕</span>
-        <span class="chip" onclick="selectEmoji('✈️')">✈️</span>
-        <span class="chip" onclick="selectEmoji('🎉')">🎉</span>
-        <span class="chip" onclick="selectEmoji('💼')">💼</span>
-        <span class="chip" onclick="selectEmoji('🚗')">🚗</span>
-        <span class="chip" onclick="selectEmoji('🎮')">🎮</span>
-        <span class="chip" onclick="selectEmoji('🏋️')">🏋️</span>
-        <span class="chip" onclick="selectEmoji('🌿')">🌿</span>
+
+    <!-- MODE TOGGLE -->
+    <div class="room-mode-toggle" id="mg-mode-toggle">
+      <div class="room-mode-btn active-host" id="mg-btn-host" onclick="setRoomMode('host')">
+        🔑 Host a Room
       </div>
-      <input type="text" class="form-input" id="mg-emoji" placeholder="Or type any emoji" maxlength="4" style="margin-top:8px;" value="🏖️"/>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Members</label>
-      <div class="add-member-row">
-        <input type="text" class="form-input" id="mg-member-input" placeholder="Add member name..." maxlength="32" onkeydown="if(event.key==='Enter')addMember()"/>
-        <button class="btn btn-secondary btn-sm" onclick="addMember()">Add</button>
+      <div class="room-mode-btn" id="mg-btn-join" onclick="setRoomMode('join')">
+        🚪 Join a Room
       </div>
-      <div class="member-chips" id="mg-members-list" style="margin-top:10px;"></div>
-      <div style="font-size:0.78rem;color:var(--text3);margin-top:6px;">You are automatically added as a member.</div>
     </div>
-    <input type="hidden" id="mg-edit-id" value=""/>
-    <button class="btn btn-primary btn-full" onclick="saveGroup()">Save Group</button>
+
+    <!-- HOST FIELDS -->
+    <div id="mg-host-fields">
+      <div class="form-group">
+        <label class="form-label">Group Name</label>
+        <input type="text" class="form-input" id="mg-name" placeholder="e.g. Trip to Goa, Roommates..." maxlength="40"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Emoji / Icon</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;" id="emoji-picker">
+          <span class="chip" onclick="selectEmoji('🏖️')">🏖️</span>
+          <span class="chip" onclick="selectEmoji('🏠')">🏠</span>
+          <span class="chip" onclick="selectEmoji('🍕')">🍕</span>
+          <span class="chip" onclick="selectEmoji('✈️')">✈️</span>
+          <span class="chip" onclick="selectEmoji('🎉')">🎉</span>
+          <span class="chip" onclick="selectEmoji('💼')">💼</span>
+          <span class="chip" onclick="selectEmoji('🚗')">🚗</span>
+          <span class="chip" onclick="selectEmoji('🎮')">🎮</span>
+          <span class="chip" onclick="selectEmoji('🏋️')">🏋️</span>
+          <span class="chip" onclick="selectEmoji('🌿')">🌿</span>
+        </div>
+        <input type="text" class="form-input" id="mg-emoji" placeholder="Or type any emoji" maxlength="4" value="🏖️"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Create Room Password</label>
+        <div class="pw-input-wrap">
+          <input type="password" class="form-input" id="mg-host-pw" placeholder="Set a password for members to join..." maxlength="32" autocomplete="new-password"/>
+          <span class="pw-toggle" onclick="togglePw('mg-host-pw',this)">👁</span>
+        </div>
+        <div style="font-size:0.75rem;color:var(--text3);margin-top:6px;">
+          Share this password with people you want in your group. They'll enter it to join.
+        </div>
+      </div>
+      <!-- After hosting, show the room code -->
+      <div id="mg-host-code-display" style="display:none;" class="form-group">
+        <label class="form-label">Room Password (share this!)</label>
+        <div class="room-code-display">
+          <div class="room-code-value" id="mg-host-code-value">—</div>
+          <div class="copy-btn" onclick="copyRoomCode()">Copy</div>
+        </div>
+      </div>
+      <input type="hidden" id="mg-edit-id" value=""/>
+      <button class="btn btn-host btn-full" onclick="hostGroup()" id="mg-host-btn">
+        🔑 &nbsp;HOST GROUP
+      </button>
+    </div>
+
+    <!-- JOIN FIELDS -->
+    <div id="mg-join-fields" style="display:none;">
+      <div style="
+        background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(0,212,255,0.05));
+        border:1px solid rgba(124,58,237,0.2);border-radius:var(--radius-sm);
+        padding:14px 16px;margin-bottom:20px;font-size:0.85rem;color:var(--text2);
+        line-height:1.6;
+      ">
+        Ask the group host for the <strong style="color:#a78bfa;">Room Password</strong>. Enter it below and your name will be added to the group automatically.
+      </div>
+      <div class="form-group">
+        <label class="form-label">Room Password</label>
+        <div class="pw-input-wrap">
+          <input type="password" class="form-input" id="mg-join-pw" placeholder="Enter the room password..." maxlength="32" oninput="liveJoinLookup()" autocomplete="off"/>
+          <span class="pw-toggle" onclick="togglePw('mg-join-pw',this)">👁</span>
+        </div>
+      </div>
+      <!-- Live preview of found group -->
+      <div id="mg-join-preview"></div>
+      <button class="btn btn-join btn-full" onclick="joinGroup()" style="margin-top:8px;">
+        🚪 &nbsp;JOIN GROUP
+      </button>
+    </div>
+
   </div>
 </div>
 
@@ -1102,18 +1235,22 @@ function renderGroups() {
     const exps = allExpenses.filter(e => e.groupId === g.id);
     const total = exps.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
     const members = (g.members || []).length;
+    const user = ls('px_user') || {};
+    const myName = user.name || 'Guest';
+    const isHost = g.hostName === myName;
     return `
       <div class="group-card" onclick="openGroupDetail('${g.id}')">
         <div class="group-icon">${g.emoji || '🏘️'}</div>
         <div class="group-info">
           <div class="group-name">${escHtml(g.name)}</div>
           <div class="group-meta">${members} member${members!==1?'s':''} · ${exps.length} expense${exps.length!==1?'s':''}</div>
+          <div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap;">
+            ${isHost ? '<span class="badge badge-blue">🔑 Host</span>' : '<span class="badge badge-purple">🚪 Member</span>'}
+            ${g.roomCode ? `<span class="badge badge-yellow" style="font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;">pw: ${escHtml(g.roomCode)}</span>` : ''}
+          </div>
         </div>
         <div>
           <div class="group-balance">${fmt(total)}</div>
-          <div style="text-align:right;margin-top:4px;">
-            <span class="badge badge-blue" style="font-size:0.65rem;">View</span>
-          </div>
         </div>
       </div>`;
   }).join('');
@@ -1153,13 +1290,30 @@ function renderGroupDetail(id) {
   const suggestion = exps.length ? getPayNextSuggestion([g], exps, myName) : null;
 
   document.getElementById('group-detail-content').innerHTML = `
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
-      <div style="font-size:2rem;">${g.emoji || '🏘️'}</div>
-      <div>
+    <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:20px;">
+      <div style="font-size:2rem;padding-top:2px;">${g.emoji || '🏘️'}</div>
+      <div style="flex:1;min-width:0;">
         <div style="font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;">${escHtml(g.name)}</div>
-        <div style="color:var(--text2);font-size:0.82rem;">${members.length} members · ${exps.length} expenses · ${fmt(total)} total</div>
+        <div style="color:var(--text2);font-size:0.82rem;margin-top:2px;">${members.length} members · ${exps.length} expenses · ${fmt(total)} total</div>
+        ${g.roomCode ? `
+        <div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-weight:700;">Room Password:</span>
+          <div class="room-code-display" style="padding:6px 12px;display:inline-flex;gap:10px;align-items:center;">
+            <span class="room-code-value" style="font-size:0.95rem;">${escHtml(g.roomCode)}</span>
+            <span class="copy-btn" style="padding:3px 8px;font-size:0.68rem;" onclick="event.stopPropagation();navigator.clipboard.writeText('${escAttr(g.roomCode)}').then(()=>showToast('Copied!','success'))">Copy</span>
+          </div>
+        </div>` : ''}
+        <div style="margin-top:8px;">
+          <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-weight:700;margin-bottom:5px;">Members</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            ${members.map(m => {
+              const isHost2 = g.hostName === m;
+              return `<span class="chip ${isHost2 ? 'selected' : ''}" style="cursor:default;">${escHtml(m)}${isHost2 ? ' <span style="font-size:0.6rem;color:var(--accent);">★Host</span>' : ''}</span>`;
+            }).join('')}
+          </div>
+        </div>
       </div>
-      <div style="margin-left:auto;display:flex;gap:8px;">
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
         <button class="btn btn-secondary btn-sm" onclick="editGroup('${id}')">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteGroup('${id}')">Delete</button>
       </div>
@@ -1273,33 +1427,54 @@ function goToAddExpenseForGroup(id) {
 }
 
 // ══════════════════════════════════════════════════
-//  GROUP CRUD
+//  ROOM MODE TOGGLE
 // ══════════════════════════════════════════════════
-function openCreateGroup() {
-  mgMembers = [];
-  mgSelectedEmoji = '🏖️';
-  editGroupId = null;
-  document.getElementById('mg-name').value = '';
-  document.getElementById('mg-emoji').value = '🏖️';
-  document.getElementById('mg-member-input').value = '';
-  document.getElementById('mg-edit-id').value = '';
-  document.getElementById('modal-group-title').textContent = 'Create Group';
-  renderMgMembers();
-  openModal('modal-group');
+let currentRoomMode = 'host'; // 'host' | 'join'
+
+function setRoomMode(mode) {
+  currentRoomMode = mode;
+  const hostBtn = document.getElementById('mg-btn-host');
+  const joinBtn = document.getElementById('mg-btn-join');
+  const hostFields = document.getElementById('mg-host-fields');
+  const joinFields = document.getElementById('mg-join-fields');
+
+  if (mode === 'host') {
+    hostBtn.className = 'room-mode-btn active-host';
+    joinBtn.className = 'room-mode-btn';
+    hostFields.style.display = '';
+    joinFields.style.display = 'none';
+    document.getElementById('modal-group-title').textContent = 'Host a Room';
+  } else {
+    joinBtn.className = 'room-mode-btn active-join';
+    hostBtn.className = 'room-mode-btn';
+    hostFields.style.display = 'none';
+    joinFields.style.display = '';
+    document.getElementById('modal-group-title').textContent = 'Join a Room';
+    document.getElementById('mg-join-pw').value = '';
+    document.getElementById('mg-join-preview').innerHTML = '';
+  }
 }
 
-function editGroup(id) {
-  const groups = ls('px_groups') || [];
-  const g = groups.find(g => g.id === id);
-  if (!g) return;
-  editGroupId = id;
-  mgMembers = [...(g.members || [])];
-  mgSelectedEmoji = g.emoji || '🏖️';
-  document.getElementById('mg-name').value = g.name || '';
-  document.getElementById('mg-emoji').value = g.emoji || '🏖️';
-  document.getElementById('mg-edit-id').value = id;
-  document.getElementById('modal-group-title').textContent = 'Edit Group';
-  renderMgMembers();
+function togglePw(id, icon) {
+  const input = document.getElementById(id);
+  if (!input) return;
+  if (input.type === 'password') { input.type = 'text'; icon.textContent = '🙈'; }
+  else { input.type = 'password'; icon.textContent = '👁'; }
+}
+
+// ══════════════════════════════════════════════════
+//  GROUP CRUD (Room-based)
+// ══════════════════════════════════════════════════
+function openCreateGroup() {
+  currentRoomMode = 'host';
+  document.getElementById('mg-name').value = '';
+  document.getElementById('mg-emoji').value = '🏖️';
+  document.getElementById('mg-host-pw').value = '';
+  document.getElementById('mg-host-pw').type = 'password';
+  document.getElementById('mg-edit-id').value = '';
+  document.getElementById('mg-host-code-display').style.display = 'none';
+  document.getElementById('mg-host-btn').style.display = '';
+  setRoomMode('host');
   openModal('modal-group');
 }
 
@@ -1308,64 +1483,174 @@ function selectEmoji(e) {
   document.getElementById('mg-emoji').value = e;
 }
 
-function addMember() {
-  const input = document.getElementById('mg-member-input');
-  const name = (input.value || '').trim();
-  if (!name) return;
-  if (mgMembers.includes(name)) { showToast('Member already added', 'error'); return; }
-  mgMembers.push(name);
-  input.value = '';
-  renderMgMembers();
-}
-
-function removeMember(name) {
-  const user = ls('px_user') || {};
-  if (name === (user.name || 'Guest')) { showToast("Can't remove yourself", 'error'); return; }
-  mgMembers = mgMembers.filter(m => m !== name);
-  renderMgMembers();
-}
-
-function renderMgMembers() {
-  const user = ls('px_user') || {};
-  const myName = user.name || 'Guest';
-  if (!mgMembers.includes(myName)) mgMembers.unshift(myName);
-  document.getElementById('mg-members-list').innerHTML = mgMembers.map(m =>
-    `<div class="chip selected">${escHtml(m)}${m!==myName?`<span class="remove-btn" onclick="removeMember('${escAttr(m)}')">✕</span>`:'<span style="font-size:0.6rem;color:var(--accent);margin-left:2px;">★</span>'}</div>`
-  ).join('');
-}
-
-function saveGroup() {
-  const name = (document.getElementById('mg-name').value || '').trim();
+// ── HOST GROUP ──────────────────────────────────────
+function hostGroup() {
+  const name  = (document.getElementById('mg-name').value || '').trim();
   const emoji = (document.getElementById('mg-emoji').value || '').trim() || '🏘️';
+  const pw    = (document.getElementById('mg-host-pw').value || '').trim();
+
   if (!name) { showToast('Please enter a group name', 'error'); return; }
-  const user = ls('px_user') || {};
-  const myName = user.name || 'Guest';
-  if (!mgMembers.includes(myName)) mgMembers.unshift(myName);
+  if (!pw || pw.length < 3) { showToast('Password must be at least 3 characters', 'error'); return; }
 
   const groups = ls('px_groups') || [];
+
+  // Check password not already taken by another group
+  const conflict = groups.find(g => g.roomCode === pw);
+  if (conflict) {
+    showToast('That password is already used by another group — try a different one', 'error');
+    return;
+  }
+
+  const user   = ls('px_user') || {};
+  const myName = user.name || 'Guest';
   const editId = document.getElementById('mg-edit-id').value;
+
   if (editId) {
+    // Edit existing
     const idx = groups.findIndex(g => g.id === editId);
     if (idx > -1) {
-      groups[idx].name = name;
-      groups[idx].emoji = emoji;
-      groups[idx].members = [...mgMembers];
+      groups[idx].name     = name;
+      groups[idx].emoji    = emoji;
+      groups[idx].roomCode = pw;
+      if (!groups[idx].members.includes(myName)) groups[idx].members.unshift(myName);
     }
-  } else {
-    groups.push({ id: uid(), name, emoji, members: [...mgMembers], createdAt: new Date().toISOString() });
+    lsSet('px_groups', groups);
+    showToast('Group updated!', 'success');
+    closeModal('modal-group');
+    renderGroups();
+    if (currentDetailGroupId === editId) renderGroupDetail(editId);
+    return;
   }
+
+  // New group
+  const newGroup = {
+    id:        uid(),
+    name,
+    emoji,
+    roomCode:  pw,
+    hostName:  myName,
+    members:   [myName],
+    createdAt: new Date().toISOString()
+  };
+  groups.push(newGroup);
   lsSet('px_groups', groups);
-  closeModal('modal-group');
-  showToast(editId ? 'Group updated!' : 'Group created! 🎉', 'success');
+
+  // Show the room code and lock the form
+  document.getElementById('mg-host-code-value').textContent = pw;
+  document.getElementById('mg-host-code-display').style.display = '';
+  document.getElementById('mg-host-btn').style.display = 'none';
+  document.getElementById('mg-host-pw').disabled = true;
+  document.getElementById('mg-name').disabled    = true;
+  document.getElementById('mg-emoji').disabled   = true;
+
+  showToast('Room created! Share the password with your group 🎉', 'success');
   renderGroups();
-  if (editId && currentDetailGroupId === editId) renderGroupDetail(editId);
+}
+
+function copyRoomCode() {
+  const code = document.getElementById('mg-host-code-value').textContent;
+  navigator.clipboard.writeText(code).then(() => showToast('Password copied!', 'success')).catch(() => {
+    showToast('Code: ' + code, '');
+  });
+}
+
+// ── JOIN GROUP ──────────────────────────────────────
+let joinLookupTimer = null;
+function liveJoinLookup() {
+  clearTimeout(joinLookupTimer);
+  joinLookupTimer = setTimeout(() => {
+    const pw = (document.getElementById('mg-join-pw').value || '').trim();
+    const previewEl = document.getElementById('mg-join-preview');
+    if (!pw) { previewEl.innerHTML = ''; return; }
+    const groups = ls('px_groups') || [];
+    const found  = groups.find(g => g.roomCode === pw);
+    if (found) {
+      const user   = ls('px_user') || {};
+      const myName = user.name || 'Guest';
+      const alreadyIn = (found.members || []).includes(myName);
+      previewEl.innerHTML = `
+        <div class="join-preview">
+          <div class="join-preview-icon">${found.emoji || '🏘️'}</div>
+          <div>
+            <div class="join-preview-name">${escHtml(found.name)}</div>
+            <div class="join-preview-meta">
+              ${(found.members||[]).length} member${(found.members||[]).length!==1?'s':''} · Hosted by ${escHtml(found.hostName||'Unknown')}
+              ${alreadyIn ? ' · <span style="color:var(--warn);">You\'re already in this group</span>' : ''}
+            </div>
+          </div>
+        </div>`;
+    } else {
+      previewEl.innerHTML = `
+        <div style="padding:10px 14px;background:rgba(255,56,96,0.08);border:1px solid rgba(255,56,96,0.2);
+          border-radius:var(--radius-sm);font-size:0.85rem;color:var(--danger);margin-top:8px;">
+          No room found with that password
+        </div>`;
+    }
+  }, 350);
+}
+
+function joinGroup() {
+  const pw = (document.getElementById('mg-join-pw').value || '').trim();
+  if (!pw) { showToast('Enter the room password', 'error'); return; }
+
+  const groups  = ls('px_groups') || [];
+  const idx     = groups.findIndex(g => g.roomCode === pw);
+  if (idx === -1) { showToast('No group found with that password', 'error'); return; }
+
+  const user   = ls('px_user') || {};
+  const myName = user.name || 'Guest';
+
+  if ((groups[idx].members || []).includes(myName)) {
+    showToast(`You're already in "${groups[idx].name}"`, 'error');
+    closeModal('modal-group');
+    renderGroups();
+    return;
+  }
+
+  if (!Array.isArray(groups[idx].members)) groups[idx].members = [];
+  groups[idx].members.push(myName);
+  lsSet('px_groups', groups);
+
+  showToast(`Joined "${groups[idx].name}" successfully! 🚪`, 'success');
+  closeModal('modal-group');
+  renderGroups();
+}
+
+// ── EDIT GROUP (re-open modal pre-filled) ──────────
+function editGroup(id) {
+  const groups = ls('px_groups') || [];
+  const g      = groups.find(g => g.id === id);
+  if (!g) return;
+
+  const user   = ls('px_user') || {};
+  const myName = user.name || 'Guest';
+  if (g.hostName && g.hostName !== myName) {
+    showToast('Only the group host can edit this room', 'error');
+    return;
+  }
+
+  document.getElementById('mg-name').value  = g.name  || '';
+  document.getElementById('mg-emoji').value = g.emoji || '🏖️';
+  document.getElementById('mg-host-pw').value    = g.roomCode || '';
+  document.getElementById('mg-host-pw').disabled = false;
+  document.getElementById('mg-name').disabled    = false;
+  document.getElementById('mg-emoji').disabled   = false;
+  document.getElementById('mg-edit-id').value    = id;
+  document.getElementById('mg-host-code-display').style.display = 'none';
+  document.getElementById('mg-host-btn').style.display = '';
+  document.getElementById('mg-host-btn').textContent   = '💾  SAVE CHANGES';
+  setRoomMode('host');
+
+  // Hide join tab while editing
+  document.getElementById('mg-btn-join').style.display = 'none';
+  openModal('modal-group');
 }
 
 function deleteGroup(id) {
   if (!confirm('Delete this group and all its expenses?')) return;
-  let groups = ls('px_groups') || [];
+  let groups   = ls('px_groups')   || [];
   let expenses = ls('px_expenses') || [];
-  groups = groups.filter(g => g.id !== id);
+  groups   = groups.filter(g => g.id !== id);
   expenses = expenses.filter(e => e.groupId !== id);
   lsSet('px_groups', groups);
   lsSet('px_expenses', expenses);
@@ -1626,7 +1911,23 @@ function confirmClearData() {
 //  MODAL HELPERS
 // ══════════════════════════════════════════════════
 function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+  // Reset group modal state
+  if (id === 'modal-group') {
+    const hostBtn = document.getElementById('mg-host-btn');
+    if (hostBtn) { hostBtn.style.display = ''; hostBtn.textContent = '🔑  HOST GROUP'; }
+    const pw   = document.getElementById('mg-host-pw');
+    const name = document.getElementById('mg-name');
+    const emj  = document.getElementById('mg-emoji');
+    if (pw)   { pw.disabled = false; pw.type = 'password'; }
+    if (name) name.disabled = false;
+    if (emj)  emj.disabled  = false;
+    const joinTab = document.getElementById('mg-btn-join');
+    if (joinTab) joinTab.style.display = '';
+    document.getElementById('mg-host-code-display').style.display = 'none';
+  }
+}
 document.querySelectorAll('.modal-overlay').forEach(o => {
   o.addEventListener('click', e => { if (e.target === o) o.classList.add('hidden'); });
 });
