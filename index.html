@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PhantoraX — Bill Splitter</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg0: #04050a;
+    --bg1: #080c14;
+    --bg2: #0d1320;
+    --bg3: #121a2b;
+    --bg4: #192236;
+    --card: #0f1624;
+    --border: #1e2d47;
+    --border2: #243452;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --accent3: #06ffa5;
+    --accent4: #ff6b35;
+    --danger: #ff3860;
+    --warn: #ffd166;
+    --text: #e8edf5;
+    --text2: #8a9bb8;
+    --text3: #4a5d7a;
+    --glow: 0 0 20px rgba(0,212,255,0.3);
+    --glow2: 0 0 20px rgba(124,58,237,0.3);
+    --radius: 14px;
+    --radius-sm: 8px;
+    --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg0);
+    color:var(--text);
+    font-family:'Rajdhani',sans-serif;
+    font-size:16px;
+    min-height:100vh;
+    overflow-x:hidden;
+    line-height:1.5;
+  }
+  /* Noise texture overlay */
+  body::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events:none;
+    z-index:9999;
+    opacity:0.4;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar{width:4px;}
+  ::-webkit-scrollbar-track{background:var(--bg1);}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+
+  /* ── GRID BACKGROUND ── */
+  .grid-bg{
+    position:fixed;inset:0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size:40px 40px;
+    pointer-events:none;z-index:0;
+  }
+
+  /* ── ONBOARDING ── */
+  #onboarding{
+    position:fixed;inset:0;
+    background:var(--bg0);
+    display:flex;align-items:center;justify-content:center;
+    z-index:1000;
+    flex-direction:column;
+    gap:0;
+    transition:opacity 0.5s, transform 0.5s;
+  }
+  #onboarding.hidden{opacity:0;pointer-events:none;transform:scale(0.96);}
+  .onboard-box{
+    background:var(--card);
+    border:1px solid var(--border2);
+    border-radius:20px;
+    padding:48px 40px;
+    width:min(460px,92vw);
+    text-align:center;
+    position:relative;
+    box-shadow:0 0 80px rgba(0,212,255,0.08), 0 0 0 1px rgba(0,212,255,0.06);
+    animation:fadeUp 0.6s ease both;
+  }
+  @keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+  .onboard-logo{
+    font-family:'Orbitron',monospace;
+    font-size:2.4rem;
+    font-weight:900;
+    letter-spacing:0.05em;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    margin-bottom:6px;
+  }
+  .onboard-sub{color:var(--text2);font-size:0.9rem;margin-bottom:32px;letter-spacing:0.08em;text-transform:uppercase;}
+  .onboard-label{
+    display:block;text-align:left;font-size:0.8rem;
+    letter-spacing:0.1em;text-transform:uppercase;
+    color:var(--text2);margin-bottom:8px;font-weight:600;
+  }
+  .onboard-input{
+    width:100%;background:var(--bg3);border:1px solid var(--border2);
+    border-radius:var(--radius-sm);padding:13px 16px;
+    color:var(--text);font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:500;
+    outline:none;transition:border-color var(--transition), box-shadow var(--transition);
+    margin-bottom:16px;
+  }
+  .onboard-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,0.12);}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:12px 24px;border-radius:var(--radius-sm);
+    font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:700;
+    letter-spacing:0.05em;text-transform:uppercase;
+    cursor:pointer;border:none;transition:all var(--transition);
+    text-decoration:none;user-select:none;
+  }
+  .btn-primary{background:linear-gradient(135deg,var(--accent),#0096cc);color:#000;}
+  .btn-primary:hover{filter:brightness(1.15);box-shadow:var(--glow);}
+  .btn-secondary{background:transparent;border:1px solid var(--border2);color:var(--text2);}
+  .btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-ghost{background:transparent;color:var(--text2);padding:8px 12px;}
+  .btn-ghost:hover{color:var(--accent);}
+  .btn-danger{background:rgba(255,56,96,0.15);border:1px solid rgba(255,56,96,0.4);color:var(--danger);}
+  .btn-danger:hover{background:rgba(255,56,96,0.25);}
+  .btn-sm{padding:7px 14px;font-size:0.82rem;}
+  .btn-full{width:100%;}
+  .divider{
+    display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--text3);font-size:0.8rem;
+  }
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+  /* ── APP SHELL ── */
+  #app{
+    min-height:100vh;
+    display:flex;flex-direction:column;
+    position:relative;z-index:1;
+  }
+  #app.hidden{display:none;}
+
+  /* ── TOP BAR ── */
+  .topbar{
+    position:sticky;top:0;z-index:100;
+    background:rgba(4,5,10,0.85);
+    backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border);
+    padding:0 20px;
+    height:60px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .topbar-logo{
+    font-family:'Orbitron',monospace;font-weight:900;font-size:1.2rem;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    letter-spacing:0.04em;
+  }
+  .topbar-right{display:flex;align-items:center;gap:10px;}
+  .avatar-btn{
+    width:36px;height:36px;border-radius:50%;
+    background:linear-gradient(135deg,var(--accent2),var(--accent));
+    border:2px solid var(--accent);
+    cursor:pointer;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:0.9rem;color:#fff;
+    transition:box-shadow var(--transition);
+  }
+  .avatar-btn:hover{box-shadow:var(--glow);}
+  .avatar-btn img{width:100%;height:100%;object-fit:cover;}
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav{
+    position:fixed;bottom:0;left:0;right:0;z-index:100;
+    background:rgba(8,12,20,0.95);
+    backdrop-filter:blur(20px);
+    border-top:1px solid var(--border);
+    display:flex;
+    height:64px;
+    padding-bottom:env(safe-area-inset-bottom,0);
+  }
+  .nav-btn{
+    flex:1;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    gap:3px;cursor:pointer;
+    background:none;border:none;
+    color:var(--text3);font-family:'Rajdhani',sans-serif;
+    font-size:0.7rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+    transition:color var(--transition);
+    position:relative;
+  }
+  .nav-btn.active{color:var(--accent);}
+  .nav-btn.active::after{
+    content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+    width:32px;height:2px;background:var(--accent);
+    border-radius:0 0 2px 2px;box-shadow:0 0 8px var(--accent);
+  }
+  .nav-btn svg{width:22px;height:22px;stroke-width:1.8;}
+  .nav-btn:hover{color:var(--text);}
+
+  /* ── MAIN CONTENT ── */
+  .main{
+    flex:1;
+    padding:20px 20px 80px;
+    max-width:720px;
+    margin:0 auto;
+    width:100%;
+  }
+
+  /* ── VIEWS ── */
+  .view{display:none;}
+  .view.active{display:block;animation:fadeIn 0.25s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+  /* ── SECTION TITLE ── */
+  .sec-title{
+    font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;
+    letter-spacing:0.06em;color:var(--text);margin-bottom:4px;
+  }
+  .sec-sub{color:var(--text2);font-size:0.88rem;margin-bottom:20px;}
+  .row-between{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+
+  /* ── CARDS ── */
+  .card{
+    background:var(--card);border:1px solid var(--border);
+    border-radius:var(--radius);padding:20px;margin-bottom:14px;
+    transition:border-color var(--transition),box-shadow var(--transition);
+    position:relative;overflow:hidden;
+  }
+  .card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(0,212,255,0.3),transparent);
+    opacity:0;transition:opacity var(--transition);
+  }
+  .card:hover{border-color:var(--border2);}
+  .card:hover::before{opacity:1;}
+  .card-clickable{cursor:pointer;}
+  .card-clickable:hover{border-color:rgba(0,212,255,0.4);box-shadow:0 4px 24px rgba(0,212,255,0.06);}
+
+  /* ── STAT CARDS ── */
+  .stats-grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;
+  }
+  .stat-card{
+    background:var(--card);border:1px solid var(--border);
+    border-radius:var(--radius);padding:16px;
+    position:relative;overflow:hidden;
+  }
+  .stat-card::after{
+    content:'';position:absolute;bottom:-20px;right:-20px;
+    width:80px;height:80px;border-radius:50%;
+    background:radial-gradient(circle,rgba(0,212,255,0.08),transparent);
+  }
+  .stat-label{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-weight:600;}
+  .stat-value{font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:700;margin-top:4px;}
+  .stat-value.green{color:var(--accent3);}
+  .stat-value.red{color:var(--danger);}
+  .stat-value.blue{color:var(--accent);}
+  .stat-value.purple{color:var(--accent2);}
+
+  /* ── FORM ELEMENTS ── */
+  .form-group{margin-bottom:18px;}
+  .form-label{
+    display:block;font-size:0.78rem;letter-spacing:0.1em;
+    text-transform:uppercase;color:var(--text2);margin-bottom:7px;font-weight:600;
+  }
+  .form-input,.form-select,.form-textarea{
+    width:100%;background:var(--bg3);border:1px solid var(--border2);
+    border-radius:var(--radius-sm);padding:11px 14px;
+    color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.97rem;font-weight:500;
+    outline:none;transition:border-color var(--transition),box-shadow var(--transition);
+    appearance:none;
+  }
+  .form-input:focus,.form-select:focus,.form-textarea:focus{
+    border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,0.1);
+  }
+  .form-textarea{resize:vertical;min-height:80px;}
+  .form-select{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a9bb8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;background-size:16px;
+    padding-right:36px;cursor:pointer;
+  }
+  .form-select option{background:var(--bg2);}
+
+  /* ── CHECKBOX / TOGGLE ── */
+  .checkbox-row{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+  .checkbox-box{
+    width:18px;height:18px;border:1px solid var(--border2);border-radius:4px;
+    background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    transition:all var(--transition);
+  }
+  .checkbox-row.checked .checkbox-box{background:var(--accent);border-color:var(--accent);}
+  .checkbox-row.checked .checkbox-box::after{
+    content:'✓';color:#000;font-size:0.7rem;font-weight:700;
+  }
+
+  /* ── TAGS / BADGES ── */
+  .badge{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:3px 10px;border-radius:20px;
+    font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+  }
+  .badge-blue{background:rgba(0,212,255,0.12);color:var(--accent);border:1px solid rgba(0,212,255,0.2);}
+  .badge-green{background:rgba(6,255,165,0.1);color:var(--accent3);border:1px solid rgba(6,255,165,0.2);}
+  .badge-red{background:rgba(255,56,96,0.12);color:var(--danger);border:1px solid rgba(255,56,96,0.2);}
+  .badge-purple{background:rgba(124,58,237,0.12);color:#a78bfa;border:1px solid rgba(124,58,237,0.2);}
+  .badge-orange{background:rgba(255,107,53,0.12);color:var(--accent4);border:1px solid rgba(255,107,53,0.2);}
+  .badge-yellow{background:rgba(255,209,102,0.12);color:var(--warn);border:1px solid rgba(255,209,102,0.2);}
+
+  /* ── GROUP CARD ── */
+  .group-card{
+    background:var(--card);border:1px solid var(--border);
+    border-radius:var(--radius);padding:18px 20px;margin-bottom:12px;
+    cursor:pointer;transition:all var(--transition);
+    display:flex;align-items:center;gap:16px;
+    position:relative;overflow:hidden;
+  }
+  .group-card::before{
+    content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+    background:linear-gradient(180deg,var(--accent),var(--accent2));
+    opacity:0;transition:opacity var(--transition);
+  }
+  .group-card:hover{border-color:rgba(0,212,255,0.35);transform:translateX(3px);}
+  .group-card:hover::before{opacity:1;}
+  .group-icon{
+    width:44px;height:44px;border-radius:10px;flex-shrink:0;
+    background:linear-gradient(135deg,var(--bg4),var(--bg3));
+    border:1px solid var(--border2);
+    display:flex;align-items:center;justify-content:center;font-size:1.2rem;
+  }
+  .group-info{flex:1;min-width:0;}
+  .group-name{font-weight:700;font-size:1rem;color:var(--text);margin-bottom:3px;}
+  .group-meta{font-size:0.8rem;color:var(--text2);}
+  .group-balance{text-align:right;font-family:'JetBrains Mono',monospace;font-size:0.9rem;font-weight:600;}
+
+  /* ── EXPENSE ITEM ── */
+  .expense-item{
+    background:var(--bg2);border:1px solid var(--border);
+    border-radius:var(--radius-sm);padding:14px 16px;
+    margin-bottom:8px;display:flex;align-items:center;gap:14px;
+    transition:border-color var(--transition);
+  }
+  .expense-item:hover{border-color:var(--border2);}
+  .expense-icon-wrap{
+    width:38px;height:38px;border-radius:8px;flex-shrink:0;
+    background:var(--bg3);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;font-size:1rem;
+  }
+  .expense-info{flex:1;min-width:0;}
+  .expense-desc{font-weight:600;font-size:0.95rem;color:var(--text);}
+  .expense-meta{font-size:0.78rem;color:var(--text2);margin-top:2px;}
+  .expense-amount{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1rem;color:var(--text);white-space:nowrap;}
+
+  /* ── DEBT SETTLEMENT ── */
+  .debt-row{
+    display:flex;align-items:center;gap:12px;padding:12px 16px;
+    background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);
+    margin-bottom:8px;
+  }
+  .debt-from{font-weight:600;color:var(--danger);}
+  .debt-arrow{color:var(--text3);font-size:0.8rem;}
+  .debt-to{font-weight:600;color:var(--accent3);}
+  .debt-amount{margin-left:auto;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--warn);}
+
+  /* ── MEMBER CHIPS ── */
+  .member-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+  .chip{
+    display:flex;align-items:center;gap:6px;
+    padding:5px 12px;border-radius:20px;
+    background:var(--bg3);border:1px solid var(--border2);
+    font-size:0.82rem;font-weight:600;color:var(--text2);cursor:pointer;
+    transition:all var(--transition);user-select:none;
+  }
+  .chip.selected{background:rgba(0,212,255,0.12);border-color:var(--accent);color:var(--accent);}
+  .chip:hover{border-color:var(--text3);}
+  .chip .remove-btn{
+    width:14px;height:14px;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,56,96,0.3);border-radius:50%;font-size:0.65rem;color:var(--danger);
+    line-height:1;
+  }
+
+  /* ── SPLIT SECTION ── */
+  .split-grid{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+  .split-row{
+    display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+    padding:8px 12px;background:var(--bg3);border-radius:var(--radius-sm);
+    border:1px solid var(--border);
+  }
+  .split-name{font-weight:600;font-size:0.9rem;}
+  .split-input-wrap{display:flex;align-items:center;gap:6px;}
+  .split-input{
+    width:80px;background:var(--bg2);border:1px solid var(--border2);
+    border-radius:6px;padding:6px 10px;color:var(--text);
+    font-family:'JetBrains Mono',monospace;font-size:0.9rem;outline:none;
+    text-align:right;
+  }
+  .split-input:focus{border-color:var(--accent);}
+  .split-unit{color:var(--text3);font-size:0.8rem;width:20px;}
+
+  /* ── SUGGESTION BOX ── */
+  .suggestion-box{
+    background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(0,212,255,0.08));
+    border:1px solid rgba(124,58,237,0.3);
+    border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;
+    position:relative;overflow:hidden;
+  }
+  .suggestion-box::after{
+    content:'★';position:absolute;right:16px;top:12px;
+    font-size:1.5rem;opacity:0.15;
+  }
+  .suggestion-title{
+    font-family:'Orbitron',monospace;font-size:0.75rem;
+    letter-spacing:0.12em;text-transform:uppercase;
+    color:#a78bfa;margin-bottom:6px;font-weight:700;
+  }
+  .suggestion-text{font-size:0.95rem;color:var(--text);font-weight:500;}
+
+  /* ── PROFILE ── */
+  .profile-header{
+    display:flex;flex-direction:column;align-items:center;
+    padding:28px 20px;margin-bottom:20px;
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    position:relative;overflow:hidden;
+  }
+  .profile-header::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:80px;
+    background:linear-gradient(135deg,rgba(0,212,255,0.08),rgba(124,58,237,0.08));
+  }
+  .profile-avatar{
+    width:80px;height:80px;border-radius:50%;
+    background:linear-gradient(135deg,var(--accent2),var(--accent));
+    border:3px solid var(--accent);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:1.8rem;color:#fff;
+    margin-bottom:12px;cursor:pointer;overflow:hidden;
+    position:relative;z-index:1;
+    box-shadow:var(--glow);
+    transition:all var(--transition);
+  }
+  .profile-avatar:hover{transform:scale(1.05);}
+  .profile-avatar img{width:100%;height:100%;object-fit:cover;}
+  .profile-name-display{
+    font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;
+    color:var(--text);margin-bottom:4px;z-index:1;position:relative;
+  }
+  .profile-since{font-size:0.8rem;color:var(--text3);z-index:1;position:relative;}
+
+  /* ── LINKS ── */
+  .links-list{display:flex;flex-direction:column;gap:8px;}
+  .link-row{display:flex;gap:8px;align-items:center;}
+  .link-row .form-input{flex:1;}
+
+  /* ── MODAL ── */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.7);
+    backdrop-filter:blur(8px);z-index:500;
+    display:flex;align-items:flex-end;justify-content:center;
+  }
+  .modal-overlay.hidden{display:none;}
+  .modal{
+    background:var(--bg1);border:1px solid var(--border2);
+    border-radius:20px 20px 0 0;
+    padding:24px 24px 32px;
+    width:min(580px,100vw);
+    max-height:90vh;overflow-y:auto;
+    animation:slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  .modal-header{
+    display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;
+  }
+  .modal-title{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;letter-spacing:0.04em;}
+  .modal-close{
+    width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    color:var(--text2);font-size:1rem;transition:all var(--transition);
+  }
+  .modal-close:hover{background:var(--danger);color:#fff;border-color:var(--danger);}
+
+  /* ── GROUP DETAIL VIEW ── */
+  .back-btn{
+    display:flex;align-items:center;gap:8px;
+    color:var(--text2);font-size:0.85rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+    cursor:pointer;margin-bottom:20px;width:fit-content;
+    transition:color var(--transition);
+  }
+  .back-btn:hover{color:var(--accent);}
+
+  /* ── TAB BAR ── */
+  .tab-bar{display:flex;gap:2px;background:var(--bg2);border-radius:10px;padding:3px;margin-bottom:20px;}
+  .tab{
+    flex:1;padding:8px;text-align:center;
+    border-radius:8px;cursor:pointer;
+    font-size:0.8rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+    color:var(--text3);transition:all var(--transition);
+  }
+  .tab.active{background:var(--bg4);color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,0.3);}
+
+  /* ── TOAST ── */
+  #toast{
+    position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--bg4);border:1px solid var(--border2);border-radius:10px;
+    padding:10px 20px;font-size:0.88rem;font-weight:600;color:var(--text);
+    z-index:9998;opacity:0;transition:all 0.3s;pointer-events:none;
+    white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.4);
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  #toast.success{border-color:var(--accent3);color:var(--accent3);}
+  #toast.error{border-color:var(--danger);color:var(--danger);}
+
+  /* ── EMPTY STATE ── */
+  .empty{
+    text-align:center;padding:48px 20px;color:var(--text3);
+  }
+  .empty-icon{font-size:2.5rem;margin-bottom:12px;opacity:0.5;}
+  .empty-title{font-weight:700;font-size:1rem;color:var(--text2);margin-bottom:6px;}
+  .empty-sub{font-size:0.85rem;}
+
+  /* ── MEMBER ADD ROW ── */
+  .add-member-row{display:flex;gap:8px;}
+  .add-member-row .form-input{flex:1;}
+
+  /* ── CREDIT ── */
+  .credit{
+    text-align:center;padding:16px;
+    font-size:0.72rem;color:var(--text3);
+    letter-spacing:0.06em;text-transform:uppercase;
+    border-top:1px solid var(--border);margin-top:20px;
+  }
+  .credit span{color:var(--accent);font-weight:700;}
+
+  /* ── FAB ── */
+  .fab{
+    position:fixed;right:20px;bottom:80px;
+    width:52px;height:52px;border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),#0096cc);
+    color:#000;font-size:1.5rem;font-weight:300;
+    border:none;cursor:pointer;box-shadow:0 4px 20px rgba(0,212,255,0.4);
+    display:flex;align-items:center;justify-content:center;
+    transition:all var(--transition);z-index:50;
+  }
+  .fab:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(0,212,255,0.5);}
+  .fab.hidden{display:none;}
+
+  /* ── HOME QUICK ACTIONS ── */
+  .quick-actions{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px;
+  }
+  .qa-btn{
+    background:var(--card);border:1px solid var(--border);
+    border-radius:var(--radius);padding:16px;
+    cursor:pointer;transition:all var(--transition);
+    display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+    text-align:left;
+  }
+  .qa-btn:hover{border-color:rgba(0,212,255,0.4);transform:translateY(-2px);}
+  .qa-icon{font-size:1.4rem;}
+  .qa-label{font-size:0.8rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2);}
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar{
+    height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:8px;
+  }
+  .progress-fill{
+    height:100%;border-radius:2px;
+    background:linear-gradient(90deg,var(--accent),var(--accent3));
+    transition:width 0.5s ease;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:480px){
+    .stats-grid{grid-template-columns:repeat(2,1fr);}
+    .onboard-box{padding:32px 24px;}
+    .onboard-logo{font-size:2rem;}
+    .main{padding:16px 16px 80px;}
+    .quick-actions{grid-template-columns:repeat(2,1fr);}
+  }
+
+  /* ── GLOWING LINE ── */
+  .glow-line{
+    height:1px;
+    background:linear-gradient(90deg,transparent,var(--accent),transparent);
+    margin:20px 0;opacity:0.3;
+  }
+
+  /* ── INPUT WITH PREFIX ── */
+  .input-with-prefix{position:relative;}
+  .input-prefix{
+    position:absolute;left:12px;top:50%;transform:translateY(-50%);
+    color:var(--accent);font-weight:700;font-size:1rem;font-family:'JetBrains Mono',monospace;
+    pointer-events:none;
+  }
+  .input-with-prefix .form-input{padding-left:30px;}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- ONBOARDING -->
+<div id="onboarding">
+  <div class="onboard-box">
+    <div class="onboard-logo">PhantoraX</div>
+    <div class="onboard-sub">Smart Bill Splitting</div>
+    <label class="onboard-label">Your Name</label>
+    <input type="text" id="ob-name" class="onboard-input" placeholder="Enter your name..." maxlength="32" autocomplete="off"/>
+    <button class="btn btn-primary btn-full" onclick="startWithName()">Get Started →</button>
+    <div class="divider">or</div>
+    <button class="btn btn-secondary btn-full" onclick="startAsGuest()">Continue as Guest</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-logo">PhantoraX</div>
+    <div class="topbar-right">
+      <div class="avatar-btn" id="topbar-avatar" onclick="goView('profile')">?</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="main-content">
+
+    <!-- HOME VIEW -->
+    <div class="view active" id="view-home">
+      <div style="margin-bottom:20px;">
+        <div style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;margin-bottom:4px;">
+          Hey, <span id="home-greeting" style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">User</span> 👋
+        </div>
+        <div style="color:var(--text2);font-size:0.88rem;">Here's your financial overview</div>
+      </div>
+
+      <div class="stats-grid" id="home-stats"></div>
+
+      <div class="suggestion-box" id="home-suggestion" style="display:none;"></div>
+
+      <div class="row-between">
+        <div>
+          <div class="sec-title">Recent Activity</div>
+          <div class="sec-sub">Latest expenses across all groups</div>
+        </div>
+      </div>
+      <div id="home-recent"></div>
+
+      <div class="glow-line"></div>
+      <div class="row-between">
+        <div><div class="sec-title">Quick Actions</div></div>
+      </div>
+      <div class="quick-actions">
+        <div class="qa-btn" onclick="openCreateGroup()">
+          <div class="qa-icon">🏘️</div>
+          <div class="qa-label">New Group</div>
+        </div>
+        <div class="qa-btn" onclick="goView('add-expense')">
+          <div class="qa-icon">➕</div>
+          <div class="qa-label">Add Expense</div>
+        </div>
+        <div class="qa-btn" onclick="goView('groups')">
+          <div class="qa-icon">📂</div>
+          <div class="qa-label">View Groups</div>
+        </div>
+        <div class="qa-btn" onclick="goView('profile')">
+          <div class="qa-icon">👤</div>
+          <div class="qa-label">My Profile</div>
+        </div>
+      </div>
+      <div class="credit">Developed By <span>Amlan Dey</span></div>
+    </div>
+
+    <!-- GROUPS VIEW -->
+    <div class="view" id="view-groups">
+      <div class="row-between">
+        <div>
+          <div class="sec-title">My Groups</div>
+          <div class="sec-sub">Manage your expense groups</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openCreateGroup()">+ New</button>
+      </div>
+      <div id="groups-list"></div>
+    </div>
+
+    <!-- GROUP DETAIL VIEW -->
+    <div class="view" id="view-group-detail">
+      <div class="back-btn" onclick="goView('groups')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="16" height="16"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back to Groups
+      </div>
+      <div id="group-detail-content"></div>
+    </div>
+
+    <!-- ADD EXPENSE VIEW -->
+    <div class="view" id="view-add-expense">
+      <div class="sec-title">Add Expense</div>
+      <div class="sec-sub">Record a new shared expense</div>
+
+      <div class="form-group">
+        <label class="form-label">Group</label>
+        <select class="form-select" id="ae-group" onchange="onGroupChange()"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input type="text" class="form-input" id="ae-desc" placeholder="e.g. Dinner at restaurant" maxlength="60"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Amount (₹)</label>
+        <div class="input-with-prefix">
+          <span class="input-prefix">₹</span>
+          <input type="number" class="form-input" id="ae-amount" placeholder="0.00" min="0" step="0.01" oninput="updateSplitPreview()"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Paid By</label>
+        <select class="form-select" id="ae-paidby"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Split Type</label>
+        <div class="tab-bar" style="margin-bottom:0;">
+          <div class="tab active" onclick="setSplitType('equal',this)">Equal</div>
+          <div class="tab" onclick="setSplitType('custom',this)">Custom ₹</div>
+          <div class="tab" onclick="setSplitType('percentage',this)">Percent %</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Split Between</label>
+        <div id="ae-split-members" class="member-chips" style="margin-bottom:12px;"></div>
+        <div id="ae-split-inputs" class="split-grid"></div>
+        <div id="ae-split-summary" style="font-size:0.8rem;color:var(--text3);margin-top:8px;font-family:'JetBrains Mono',monospace;"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="ae-category">
+          <option value="🍔">🍔 Food</option>
+          <option value="🚗">🚗 Transport</option>
+          <option value="🏨">🏨 Hotel</option>
+          <option value="🛒">🛒 Shopping</option>
+          <option value="🎉">🎉 Entertainment</option>
+          <option value="💊">💊 Health</option>
+          <option value="⚡">⚡ Utilities</option>
+          <option value="📦">📦 Other</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="saveExpense()">Save Expense</button>
+    </div>
+
+    <!-- PROFILE VIEW -->
+    <div class="view" id="view-profile">
+      <div class="profile-header">
+        <div class="profile-avatar" id="profile-avatar-display" onclick="triggerPhotoUpload()">
+          <img id="profile-photo-preview" src="" alt="" style="display:none;"/>
+          <span id="profile-initials">?</span>
+        </div>
+        <input type="file" id="photo-upload" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)"/>
+        <div style="font-size:0.7rem;color:var(--text3);margin-bottom:12px;z-index:1;position:relative;">Tap avatar to change photo</div>
+        <div class="profile-name-display" id="profile-name-display">Guest</div>
+        <div class="profile-since" id="profile-since-display"></div>
+      </div>
+
+      <div class="card">
+        <div class="form-group">
+          <label class="form-label">Your Name</label>
+          <input type="text" class="form-input" id="pf-name" placeholder="Your name" maxlength="32"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">About Me</label>
+          <input type="text" class="form-input" id="pf-about" placeholder="A short bio..." maxlength="80"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Private Notes <span style="font-size:0.7rem;color:var(--text3);">(only you see this)</span></label>
+          <textarea class="form-textarea" id="pf-notes" placeholder="Personal notes, reminders..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Links (up to 5)</label>
+          <div class="links-list" id="pf-links-list"></div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Profile</button>
+      </div>
+
+      <div class="card">
+        <div class="sec-title" style="margin-bottom:12px;">Data Management</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-secondary btn-sm" onclick="exportData()">Export Data</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmClearData()">Clear All Data</button>
+        </div>
+      </div>
+      <div class="credit">Developed By <span>Amlan Dey</span></div>
+    </div>
+
+  </div><!-- /main -->
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="home" onclick="goView('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      Home
+    </button>
+    <button class="nav-btn" data-view="groups" onclick="goView('groups')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Groups
+    </button>
+    <button class="nav-btn" data-view="add-expense" onclick="goView('add-expense')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Expense
+    </button>
+    <button class="nav-btn" data-view="profile" onclick="goView('profile')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile
+    </button>
+  </nav>
+</div><!-- /app -->
+
+<!-- MODAL: Create/Edit Group -->
+<div class="modal-overlay hidden" id="modal-group">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-group-title">Create Group</div>
+      <div class="modal-close" onclick="closeModal('modal-group')">✕</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Group Name</label>
+      <input type="text" class="form-input" id="mg-name" placeholder="Trip to Goa, Roommates..." maxlength="40"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Emoji / Icon</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="emoji-picker">
+        <span class="chip" onclick="selectEmoji('🏖️')">🏖️</span>
+        <span class="chip" onclick="selectEmoji('🏠')">🏠</span>
+        <span class="chip" onclick="selectEmoji('🍕')">🍕</span>
+        <span class="chip" onclick="selectEmoji('✈️')">✈️</span>
+        <span class="chip" onclick="selectEmoji('🎉')">🎉</span>
+        <span class="chip" onclick="selectEmoji('💼')">💼</span>
+        <span class="chip" onclick="selectEmoji('🚗')">🚗</span>
+        <span class="chip" onclick="selectEmoji('🎮')">🎮</span>
+        <span class="chip" onclick="selectEmoji('🏋️')">🏋️</span>
+        <span class="chip" onclick="selectEmoji('🌿')">🌿</span>
+      </div>
+      <input type="text" class="form-input" id="mg-emoji" placeholder="Or type any emoji" maxlength="4" style="margin-top:8px;" value="🏖️"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Members</label>
+      <div class="add-member-row">
+        <input type="text" class="form-input" id="mg-member-input" placeholder="Add member name..." maxlength="32" onkeydown="if(event.key==='Enter')addMember()"/>
+        <button class="btn btn-secondary btn-sm" onclick="addMember()">Add</button>
+      </div>
+      <div class="member-chips" id="mg-members-list" style="margin-top:10px;"></div>
+      <div style="font-size:0.78rem;color:var(--text3);margin-top:6px;">You are automatically added as a member.</div>
+    </div>
+    <input type="hidden" id="mg-edit-id" value=""/>
+    <button class="btn btn-primary btn-full" onclick="saveGroup()">Save Group</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  STORAGE HELPERS
+// ══════════════════════════════════════════════════
+function ls(key, def = null) {
+  try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : def; } catch { return def; }
+}
+function lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+function uid() { return '_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36); }
+function fmt(n) { return '₹' + (parseFloat(n) || 0).toFixed(2); }
+function fmtNum(n) { return (parseFloat(n) || 0).toFixed(2); }
+
+// ══════════════════════════════════════════════════
+//  APP STATE
+// ══════════════════════════════════════════════════
+let currentSplitType = 'equal';
+let selectedSplitMembers = [];
+let customSplits = {};
+let editGroupId = null;
+let mgMembers = [];
+let mgSelectedEmoji = '🏖️';
+let currentDetailGroupId = null;
+
+// ══════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════
+function init() {
+  const user = ls('px_user');
+  if (user && user.name) {
+    showApp();
+  } else {
+    showOnboarding();
+  }
+}
+
+function showOnboarding() {
+  document.getElementById('onboarding').classList.remove('hidden');
+  document.getElementById('app').classList.add('hidden');
+}
+
+function showApp() {
+  const ob = document.getElementById('onboarding');
+  ob.classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  renderTopbarAvatar();
+  goView('home');
+}
+
+function startWithName() {
+  const name = (document.getElementById('ob-name').value || '').trim();
+  if (!name) { showToast('Please enter your name', 'error'); return; }
+  const user = ls('px_user') || {};
+  user.name = name;
+  user.joinedAt = user.joinedAt || new Date().toISOString();
+  user.links = user.links || ['','','','',''];
+  lsSet('px_user', user);
+  showApp();
+}
+
+function startAsGuest() {
+  const user = { name: 'Guest', joinedAt: new Date().toISOString(), links: ['','','','',''] };
+  lsSet('px_user', user);
+  showApp();
+}
+
+document.getElementById('ob-name').addEventListener('keydown', e => { if (e.key === 'Enter') startWithName(); });
+
+// ══════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════
+const views = ['home','groups','group-detail','add-expense','profile'];
+function goView(name) {
+  views.forEach(v => {
+    const el = document.getElementById('view-' + v);
+    if (el) el.classList.remove('active');
+  });
+  const target = document.getElementById('view-' + name);
+  if (target) target.classList.add('active');
+
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const navMatch = document.querySelector(`.nav-btn[data-view="${name}"]`);
+  if (navMatch) navMatch.classList.add('active');
+
+  window.scrollTo(0, 0);
+
+  if (name === 'home') renderHome();
+  if (name === 'groups') renderGroups();
+  if (name === 'profile') renderProfile();
+  if (name === 'add-expense') renderAddExpense();
+}
+
+// ══════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' ' + type : '');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 2800);
+}
+
+// ══════════════════════════════════════════════════
+//  TOP BAR AVATAR
+// ══════════════════════════════════════════════════
+function renderTopbarAvatar() {
+  const user = ls('px_user') || {};
+  const btn = document.getElementById('topbar-avatar');
+  if (user.photo) {
+    btn.innerHTML = `<img src="${user.photo}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`;
+  } else {
+    btn.innerHTML = (user.name || 'G').charAt(0).toUpperCase();
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  HOME VIEW
+// ══════════════════════════════════════════════════
+function renderHome() {
+  const user = ls('px_user') || {};
+  document.getElementById('home-greeting').textContent = (user.name || 'Guest').split(' ')[0];
+
+  const groups = ls('px_groups') || [];
+  const allExpenses = ls('px_expenses') || [];
+
+  // Compute balances
+  const { totalOwed, totalOwe } = computeMyBalances(groups, allExpenses, user.name || 'Guest');
+  const totalExpenses = allExpenses.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+
+  document.getElementById('home-stats').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Total Groups</div>
+      <div class="stat-value blue">${groups.length}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Expenses</div>
+      <div class="stat-value purple">${allExpenses.length}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">You Owe</div>
+      <div class="stat-value red">${fmt(totalOwe)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">You're Owed</div>
+      <div class="stat-value green">${fmt(totalOwed)}</div>
+    </div>
+  `;
+
+  // Suggestion
+  const sugBox = document.getElementById('home-suggestion');
+  const suggestion = getPayNextSuggestion(groups, allExpenses, user.name || 'Guest');
+  if (suggestion) {
+    sugBox.style.display = '';
+    sugBox.innerHTML = `
+      <div class="suggestion-title">⚡ AI Suggestion</div>
+      <div class="suggestion-text">${suggestion}</div>
+    `;
+  } else {
+    sugBox.style.display = 'none';
+  }
+
+  // Recent
+  const recent = [...allExpenses].reverse().slice(0, 5);
+  const recentEl = document.getElementById('home-recent');
+  if (!recent.length) {
+    recentEl.innerHTML = `<div class="empty"><div class="empty-icon">💸</div><div class="empty-title">No expenses yet</div><div class="empty-sub">Add your first expense to get started</div></div>`;
+    return;
+  }
+  recentEl.innerHTML = recent.map(e => {
+    const grp = groups.find(g => g.id === e.groupId);
+    return `
+      <div class="expense-item">
+        <div class="expense-icon-wrap">${e.category || '📦'}</div>
+        <div class="expense-info">
+          <div class="expense-desc">${escHtml(e.description || 'Expense')}</div>
+          <div class="expense-meta">Paid by <strong>${escHtml(e.paidBy)}</strong> · ${escHtml(grp ? grp.name : 'Unknown')}</div>
+        </div>
+        <div class="expense-amount">${fmt(e.amount)}</div>
+      </div>`;
+  }).join('');
+}
+
+function computeMyBalances(groups, allExpenses, myName) {
+  let totalOwed = 0, totalOwe = 0;
+  allExpenses.forEach(exp => {
+    const splits = exp.splits || {};
+    const amt = parseFloat(exp.amount) || 0;
+    if (exp.paidBy === myName) {
+      Object.entries(splits).forEach(([member, share]) => {
+        if (member !== myName) totalOwed += parseFloat(share) || 0;
+      });
+    } else if (splits[myName]) {
+      totalOwe += parseFloat(splits[myName]) || 0;
+    }
+  });
+  return { totalOwed, totalOwe };
+}
+
+function getPayNextSuggestion(groups, allExpenses, myName) {
+  if (!groups.length) return null;
+  // Find who has paid the least recently
+  const paidCounts = {};
+  allExpenses.forEach(e => {
+    paidCounts[e.paidBy] = (paidCounts[e.paidBy] || 0) + 1;
+  });
+  let suggestion = null;
+  // Check if you owe someone
+  const debts = computeDebts(allExpenses);
+  const myDebts = debts.filter(d => d.from === myName);
+  if (myDebts.length) {
+    const max = myDebts.reduce((a,b) => a.amount > b.amount ? a : b);
+    suggestion = `You should pay <strong>${escHtml(max.to)}</strong> ${fmt(max.amount)} to settle your largest debt.`;
+  } else {
+    // Suggest who should pay next in most active group
+    const activeGroup = groups.reduce((a,b) => (b.members||[]).length > (a.members||[]).length ? b : a, groups[0]);
+    if (activeGroup) {
+      const members = activeGroup.members || [];
+      const groupExpenses = allExpenses.filter(e => e.groupId === activeGroup.id);
+      const paidMap = {};
+      members.forEach(m => paidMap[m] = 0);
+      groupExpenses.forEach(e => { if (paidMap[e.paidBy] !== undefined) paidMap[e.paidBy]++; });
+      const least = members.reduce((a,b) => (paidMap[a]||0) <= (paidMap[b]||0) ? a : b, members[0]);
+      if (least) suggestion = `<strong>${escHtml(least)}</strong> should pay next in <strong>${escHtml(activeGroup.name)}</strong> — they've paid the least.`;
+    }
+  }
+  return suggestion;
+}
+
+// ══════════════════════════════════════════════════
+//  GROUPS VIEW
+// ══════════════════════════════════════════════════
+function renderGroups() {
+  const groups = ls('px_groups') || [];
+  const allExpenses = ls('px_expenses') || [];
+  const el = document.getElementById('groups-list');
+  if (!groups.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🏘️</div><div class="empty-title">No groups yet</div><div class="empty-sub">Create a group to start splitting bills</div></div>`;
+    return;
+  }
+  el.innerHTML = groups.map(g => {
+    const exps = allExpenses.filter(e => e.groupId === g.id);
+    const total = exps.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+    const members = (g.members || []).length;
+    return `
+      <div class="group-card" onclick="openGroupDetail('${g.id}')">
+        <div class="group-icon">${g.emoji || '🏘️'}</div>
+        <div class="group-info">
+          <div class="group-name">${escHtml(g.name)}</div>
+          <div class="group-meta">${members} member${members!==1?'s':''} · ${exps.length} expense${exps.length!==1?'s':''}</div>
+        </div>
+        <div>
+          <div class="group-balance">${fmt(total)}</div>
+          <div style="text-align:right;margin-top:4px;">
+            <span class="badge badge-blue" style="font-size:0.65rem;">View</span>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openGroupDetail(id) {
+  currentDetailGroupId = id;
+  renderGroupDetail(id);
+  goView('group-detail');
+}
+
+function renderGroupDetail(id) {
+  const groups = ls('px_groups') || [];
+  const allExpenses = ls('px_expenses') || [];
+  const g = groups.find(g => g.id === id);
+  if (!g) return;
+  const exps = allExpenses.filter(e => e.groupId === id);
+  const debts = computeDebts(exps);
+  const user = ls('px_user') || {};
+  const myName = user.name || 'Guest';
+
+  const total = exps.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const members = g.members || [];
+
+  // Member balances
+  const balances = {};
+  members.forEach(m => balances[m] = 0);
+  exps.forEach(exp => {
+    const splits = exp.splits || {};
+    const paid = parseFloat(exp.amount) || 0;
+    if (balances[exp.paidBy] !== undefined) balances[exp.paidBy] += paid;
+    Object.entries(splits).forEach(([m, share]) => {
+      if (balances[m] !== undefined) balances[m] -= parseFloat(share) || 0;
+    });
+  });
+
+  const suggestion = exps.length ? getPayNextSuggestion([g], exps, myName) : null;
+
+  document.getElementById('group-detail-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+      <div style="font-size:2rem;">${g.emoji || '🏘️'}</div>
+      <div>
+        <div style="font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;">${escHtml(g.name)}</div>
+        <div style="color:var(--text2);font-size:0.82rem;">${members.length} members · ${exps.length} expenses · ${fmt(total)} total</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="editGroup('${id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteGroup('${id}')">Delete</button>
+      </div>
+    </div>
+
+    ${suggestion ? `<div class="suggestion-box"><div class="suggestion-title">⚡ Suggestion</div><div class="suggestion-text">${suggestion}</div></div>` : ''}
+
+    <div class="tab-bar" id="gd-tabs">
+      <div class="tab active" onclick="switchGDTab('expenses',this)">Expenses</div>
+      <div class="tab" onclick="switchGDTab('balances',this)">Balances</div>
+      <div class="tab" onclick="switchGDTab('settle',this)">Settle Up</div>
+    </div>
+
+    <div id="gd-tab-expenses">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+        <button class="btn btn-primary btn-sm" onclick="goToAddExpenseForGroup('${id}')">+ Add Expense</button>
+      </div>
+      ${exps.length ? [...exps].reverse().map(e => `
+        <div class="expense-item">
+          <div class="expense-icon-wrap">${e.category||'📦'}</div>
+          <div class="expense-info">
+            <div class="expense-desc">${escHtml(e.description||'Expense')}</div>
+            <div class="expense-meta">Paid by <strong>${escHtml(e.paidBy)}</strong> · ${Object.keys(e.splits||{}).length} people</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="expense-amount">${fmt(e.amount)}</div>
+            <div style="margin-top:4px;cursor:pointer;" onclick="deleteExpense('${e.id}','${id}')"><span class="badge badge-red" style="font-size:0.6rem;">✕</span></div>
+          </div>
+        </div>`).join('') : `<div class="empty"><div class="empty-icon">💸</div><div class="empty-title">No expenses</div><div class="empty-sub">Add the first expense for this group</div></div>`}
+    </div>
+
+    <div id="gd-tab-balances" style="display:none;">
+      ${members.map(m => {
+        const bal = balances[m] || 0;
+        const isPos = bal >= 0;
+        return `
+          <div class="expense-item">
+            <div class="expense-icon-wrap" style="font-size:0.9rem;font-weight:700;">${m.charAt(0).toUpperCase()}</div>
+            <div class="expense-info">
+              <div class="expense-desc">${escHtml(m)}</div>
+              <div class="expense-meta">${isPos ? 'Gets back' : 'Owes'} ${fmt(Math.abs(bal))}</div>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${isPos ? 'var(--accent3)' : 'var(--danger)'};">
+              ${isPos ? '+' : ''}${fmt(bal)}
+            </div>
+          </div>`;
+      }).join('')}
+    </div>
+
+    <div id="gd-tab-settle" style="display:none;">
+      ${debts.length ? debts.map(d => `
+        <div class="debt-row">
+          <div class="debt-from">${escHtml(d.from)}</div>
+          <div class="debt-arrow">→ owes →</div>
+          <div class="debt-to">${escHtml(d.to)}</div>
+          <div class="debt-amount">${fmt(d.amount)}</div>
+        </div>`).join('') : `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">All settled!</div><div class="empty-sub">No outstanding debts in this group</div></div>`}
+    </div>
+  `;
+}
+
+function switchGDTab(name, el) {
+  ['expenses','balances','settle'].forEach(t => {
+    const tab = document.getElementById('gd-tab-' + t);
+    if (tab) tab.style.display = 'none';
+  });
+  const target = document.getElementById('gd-tab-' + name);
+  if (target) target.style.display = '';
+  document.querySelectorAll('#gd-tabs .tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function computeDebts(expenses) {
+  // Net balances per person
+  const net = {};
+  expenses.forEach(exp => {
+    const paid = parseFloat(exp.amount) || 0;
+    net[exp.paidBy] = (net[exp.paidBy] || 0) + paid;
+    Object.entries(exp.splits || {}).forEach(([m, share]) => {
+      net[m] = (net[m] || 0) - (parseFloat(share) || 0);
+    });
+  });
+
+  const creditors = [], debtors = [];
+  Object.entries(net).forEach(([person, bal]) => {
+    if (bal > 0.01) creditors.push({ person, amount: bal });
+    else if (bal < -0.01) debtors.push({ person, amount: -bal });
+  });
+  creditors.sort((a,b) => b.amount - a.amount);
+  debtors.sort((a,b) => b.amount - a.amount);
+
+  const transactions = [];
+  let i = 0, j = 0;
+  while (i < debtors.length && j < creditors.length) {
+    const amt = Math.min(debtors[i].amount, creditors[j].amount);
+    if (amt > 0.01) transactions.push({ from: debtors[i].person, to: creditors[j].person, amount: amt });
+    debtors[i].amount -= amt;
+    creditors[j].amount -= amt;
+    if (debtors[i].amount < 0.01) i++;
+    if (creditors[j].amount < 0.01) j++;
+  }
+  return transactions;
+}
+
+function goToAddExpenseForGroup(id) {
+  goView('add-expense');
+  setTimeout(() => {
+    const sel = document.getElementById('ae-group');
+    if (sel) { sel.value = id; onGroupChange(); }
+  }, 100);
+}
+
+// ══════════════════════════════════════════════════
+//  GROUP CRUD
+// ══════════════════════════════════════════════════
+function openCreateGroup() {
+  mgMembers = [];
+  mgSelectedEmoji = '🏖️';
+  editGroupId = null;
+  document.getElementById('mg-name').value = '';
+  document.getElementById('mg-emoji').value = '🏖️';
+  document.getElementById('mg-member-input').value = '';
+  document.getElementById('mg-edit-id').value = '';
+  document.getElementById('modal-group-title').textContent = 'Create Group';
+  renderMgMembers();
+  openModal('modal-group');
+}
+
+function editGroup(id) {
+  const groups = ls('px_groups') || [];
+  const g = groups.find(g => g.id === id);
+  if (!g) return;
+  editGroupId = id;
+  mgMembers = [...(g.members || [])];
+  mgSelectedEmoji = g.emoji || '🏖️';
+  document.getElementById('mg-name').value = g.name || '';
+  document.getElementById('mg-emoji').value = g.emoji || '🏖️';
+  document.getElementById('mg-edit-id').value = id;
+  document.getElementById('modal-group-title').textContent = 'Edit Group';
+  renderMgMembers();
+  openModal('modal-group');
+}
+
+function selectEmoji(e) {
+  mgSelectedEmoji = e;
+  document.getElementById('mg-emoji').value = e;
+}
+
+function addMember() {
+  const input = document.getElementById('mg-member-input');
+  const name = (input.value || '').trim();
+  if (!name) return;
+  if (mgMembers.includes(name)) { showToast('Member already added', 'error'); return; }
+  mgMembers.push(name);
+  input.value = '';
+  renderMgMembers();
+}
+
+function removeMember(name) {
+  const user = ls('px_user') || {};
+  if (name === (user.name || 'Guest')) { showToast("Can't remove yourself", 'error'); return; }
+  mgMembers = mgMembers.filter(m => m !== name);
+  renderMgMembers();
+}
+
+function renderMgMembers() {
+  const user = ls('px_user') || {};
+  const myName = user.name || 'Guest';
+  if (!mgMembers.includes(myName)) mgMembers.unshift(myName);
+  document.getElementById('mg-members-list').innerHTML = mgMembers.map(m =>
+    `<div class="chip selected">${escHtml(m)}${m!==myName?`<span class="remove-btn" onclick="removeMember('${escAttr(m)}')">✕</span>`:'<span style="font-size:0.6rem;color:var(--accent);margin-left:2px;">★</span>'}</div>`
+  ).join('');
+}
+
+function saveGroup() {
+  const name = (document.getElementById('mg-name').value || '').trim();
+  const emoji = (document.getElementById('mg-emoji').value || '').trim() || '🏘️';
+  if (!name) { showToast('Please enter a group name', 'error'); return; }
+  const user = ls('px_user') || {};
+  const myName = user.name || 'Guest';
+  if (!mgMembers.includes(myName)) mgMembers.unshift(myName);
+
+  const groups = ls('px_groups') || [];
+  const editId = document.getElementById('mg-edit-id').value;
+  if (editId) {
+    const idx = groups.findIndex(g => g.id === editId);
+    if (idx > -1) {
+      groups[idx].name = name;
+      groups[idx].emoji = emoji;
+      groups[idx].members = [...mgMembers];
+    }
+  } else {
+    groups.push({ id: uid(), name, emoji, members: [...mgMembers], createdAt: new Date().toISOString() });
+  }
+  lsSet('px_groups', groups);
+  closeModal('modal-group');
+  showToast(editId ? 'Group updated!' : 'Group created! 🎉', 'success');
+  renderGroups();
+  if (editId && currentDetailGroupId === editId) renderGroupDetail(editId);
+}
+
+function deleteGroup(id) {
+  if (!confirm('Delete this group and all its expenses?')) return;
+  let groups = ls('px_groups') || [];
+  let expenses = ls('px_expenses') || [];
+  groups = groups.filter(g => g.id !== id);
+  expenses = expenses.filter(e => e.groupId !== id);
+  lsSet('px_groups', groups);
+  lsSet('px_expenses', expenses);
+  showToast('Group deleted', 'error');
+  goView('groups');
+}
+
+// ══════════════════════════════════════════════════
+//  ADD EXPENSE VIEW
+// ══════════════════════════════════════════════════
+function renderAddExpense() {
+  const groups = ls('px_groups') || [];
+  const sel = document.getElementById('ae-group');
+  sel.innerHTML = groups.length
+    ? groups.map(g => `<option value="${g.id}">${escHtml(g.emoji||'🏘️')} ${escHtml(g.name)}</option>`).join('')
+    : `<option value="">No groups yet</option>`;
+  onGroupChange();
+}
+
+function onGroupChange() {
+  const groups = ls('px_groups') || [];
+  const id = document.getElementById('ae-group').value;
+  const g = groups.find(g => g.id === id);
+  const members = g ? (g.members || []) : [];
+  const user = ls('px_user') || {};
+  const myName = user.name || 'Guest';
+
+  // Paid by
+  const paidSel = document.getElementById('ae-paidby');
+  paidSel.innerHTML = members.map(m =>
+    `<option value="${escAttr(m)}" ${m===myName?'selected':''}>${escHtml(m)}</option>`
+  ).join('');
+
+  // Split members — select all by default
+  selectedSplitMembers = [...members];
+  renderSplitMembers(members);
+  updateSplitInputs();
+}
+
+function renderSplitMembers(members) {
+  const el = document.getElementById('ae-split-members');
+  el.innerHTML = members.map(m =>
+    `<div class="chip ${selectedSplitMembers.includes(m)?'selected':''}" onclick="toggleSplitMember('${escAttr(m)}')">${escHtml(m)}</div>`
+  ).join('');
+}
+
+function toggleSplitMember(name) {
+  if (selectedSplitMembers.includes(name)) {
+    if (selectedSplitMembers.length === 1) { showToast('At least one person must be included', 'error'); return; }
+    selectedSplitMembers = selectedSplitMembers.filter(m => m !== name);
+  } else {
+    selectedSplitMembers.push(name);
+  }
+  const groups = ls('px_groups') || [];
+  const id = document.getElementById('ae-group').value;
+  const g = groups.find(g => g.id === id);
+  renderSplitMembers(g ? g.members : []);
+  updateSplitInputs();
+  updateSplitPreview();
+}
+
+function setSplitType(type, el) {
+  currentSplitType = type;
+  document.querySelectorAll('#view-add-expense .tab-bar .tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  updateSplitInputs();
+  updateSplitPreview();
+}
+
+function updateSplitInputs() {
+  const el = document.getElementById('ae-split-inputs');
+  if (currentSplitType === 'equal') { el.innerHTML = ''; return; }
+
+  el.innerHTML = selectedSplitMembers.map(m => {
+    const unit = currentSplitType === 'percentage' ? '%' : '₹';
+    const val = (customSplits[m] || '');
+    return `
+      <div class="split-row">
+        <div class="split-name">${escHtml(m)}</div>
+        <div class="split-input-wrap">
+          <input class="split-input" type="number" min="0" step="0.01" placeholder="0"
+            value="${val}" oninput="setSplitVal('${escAttr(m)}',this.value)" id="split_${cssId(m)}"/>
+          <div class="split-unit">${unit}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function setSplitVal(name, val) {
+  customSplits[name] = val;
+  updateSplitPreview();
+}
+
+function updateSplitPreview() {
+  const amount = parseFloat(document.getElementById('ae-amount').value) || 0;
+  const sumEl = document.getElementById('ae-split-summary');
+  if (!amount) { sumEl.textContent = ''; return; }
+
+  if (currentSplitType === 'equal') {
+    const share = amount / (selectedSplitMembers.length || 1);
+    sumEl.textContent = `Each person pays: ₹${fmtNum(share)}`;
+  } else if (currentSplitType === 'custom') {
+    const sum = selectedSplitMembers.reduce((s,m) => s + (parseFloat(customSplits[m])||0), 0);
+    const diff = amount - sum;
+    const ok = Math.abs(diff) < 0.01;
+    sumEl.innerHTML = `Total assigned: ₹${fmtNum(sum)} / ₹${fmtNum(amount)} ${ok ? '<span style="color:var(--accent3);">✓</span>' : `<span style="color:var(--danger);">Diff: ${diff > 0 ? '+' : ''}${fmtNum(diff)}</span>`}`;
+  } else {
+    const sum = selectedSplitMembers.reduce((s,m) => s + (parseFloat(customSplits[m])||0), 0);
+    const ok = Math.abs(sum - 100) < 0.1;
+    sumEl.innerHTML = `Total: ${fmtNum(sum)}% / 100% ${ok ? '<span style="color:var(--accent3);">✓</span>' : `<span style="color:var(--danger);">Need 100%</span>`}`;
+  }
+}
+
+function saveExpense() {
+  const groupId = document.getElementById('ae-group').value;
+  if (!groupId) { showToast('Please create a group first', 'error'); return; }
+  const desc = (document.getElementById('ae-desc').value || '').trim();
+  if (!desc) { showToast('Please enter a description', 'error'); return; }
+  const amount = parseFloat(document.getElementById('ae-amount').value);
+  if (!amount || amount <= 0) { showToast('Please enter a valid amount', 'error'); return; }
+  const paidBy = document.getElementById('ae-paidby').value;
+  const category = document.getElementById('ae-category').value;
+  if (!paidBy) { showToast('Please select who paid', 'error'); return; }
+  if (!selectedSplitMembers.length) { showToast('Please select at least one person to split with', 'error'); return; }
+
+  // Compute splits object
+  const splits = {};
+  if (currentSplitType === 'equal') {
+    const share = amount / selectedSplitMembers.length;
+    selectedSplitMembers.forEach(m => splits[m] = parseFloat(fmtNum(share)));
+  } else if (currentSplitType === 'custom') {
+    let sum = 0;
+    selectedSplitMembers.forEach(m => { splits[m] = parseFloat(customSplits[m])||0; sum += splits[m]; });
+    if (Math.abs(sum - amount) > 0.01) { showToast(`Custom amounts must sum to ₹${fmtNum(amount)}`, 'error'); return; }
+  } else {
+    let sum = 0;
+    selectedSplitMembers.forEach(m => { splits[m] = parseFloat(customSplits[m])||0; sum += splits[m]; });
+    if (Math.abs(sum - 100) > 0.1) { showToast('Percentages must sum to 100%', 'error'); return; }
+    selectedSplitMembers.forEach(m => splits[m] = parseFloat(fmtNum((splits[m]/100)*amount)));
+  }
+
+  const expenses = ls('px_expenses') || [];
+  expenses.push({ id: uid(), groupId, description: desc, amount, paidBy, splitType: currentSplitType, splits, category, createdAt: new Date().toISOString() });
+  lsSet('px_expenses', expenses);
+
+  // Reset form
+  document.getElementById('ae-desc').value = '';
+  document.getElementById('ae-amount').value = '';
+  customSplits = {};
+  document.getElementById('ae-split-inputs').innerHTML = '';
+  document.getElementById('ae-split-summary').textContent = '';
+
+  showToast('Expense saved! 💰', 'success');
+  goView('home');
+}
+
+// ══════════════════════════════════════════════════
+//  DELETE EXPENSE
+// ══════════════════════════════════════════════════
+function deleteExpense(expId, groupId) {
+  if (!confirm('Delete this expense?')) return;
+  let expenses = ls('px_expenses') || [];
+  expenses = expenses.filter(e => e.id !== expId);
+  lsSet('px_expenses', expenses);
+  showToast('Expense deleted', 'error');
+  renderGroupDetail(groupId);
+}
+
+// ══════════════════════════════════════════════════
+//  PROFILE
+// ══════════════════════════════════════════════════
+function renderProfile() {
+  const user = ls('px_user') || {};
+  document.getElementById('pf-name').value = user.name || '';
+  document.getElementById('pf-about').value = user.about || '';
+  document.getElementById('pf-notes').value = user.notes || '';
+
+  document.getElementById('profile-name-display').textContent = user.name || 'Guest';
+  document.getElementById('profile-since-display').textContent = user.joinedAt ? 'Member since ' + new Date(user.joinedAt).toLocaleDateString('en-IN', {year:'numeric',month:'long'}) : '';
+
+  // Avatar
+  const initEl = document.getElementById('profile-initials');
+  const photoEl = document.getElementById('profile-photo-preview');
+  if (user.photo) {
+    photoEl.src = user.photo; photoEl.style.display = ''; initEl.style.display = 'none';
+  } else {
+    photoEl.style.display = 'none'; initEl.style.display = '';
+    initEl.textContent = (user.name || 'G').charAt(0).toUpperCase();
+  }
+
+  // Links
+  const links = user.links || ['','','','',''];
+  document.getElementById('pf-links-list').innerHTML = [0,1,2,3,4].map(i => `
+    <div class="link-row">
+      <input type="url" class="form-input" id="pf-link-${i}" placeholder="https://..." value="${escHtml(links[i]||'')}"/>
+    </div>`).join('');
+}
+
+function triggerPhotoUpload() { document.getElementById('photo-upload').click(); }
+
+function handlePhotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 2*1024*1024) { showToast('Photo must be under 2MB', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const user = ls('px_user') || {};
+    user.photo = e.target.result;
+    lsSet('px_user', user);
+    renderProfile();
+    renderTopbarAvatar();
+    showToast('Photo updated!', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveProfile() {
+  const name = (document.getElementById('pf-name').value || '').trim() || 'Guest';
+  const about = (document.getElementById('pf-about').value || '').trim();
+  const notes = (document.getElementById('pf-notes').value || '').trim();
+  const links = [0,1,2,3,4].map(i => (document.getElementById(`pf-link-${i}`)?.value||'').trim());
+
+  const user = ls('px_user') || {};
+  user.name = name; user.about = about; user.notes = notes; user.links = links;
+  lsSet('px_user', user);
+  renderTopbarAvatar();
+  renderProfile();
+  showToast('Profile saved! ✓', 'success');
+}
+
+// ══════════════════════════════════════════════════
+//  DATA MANAGEMENT
+// ══════════════════════════════════════════════════
+function exportData() {
+  const data = {
+    user: ls('px_user'),
+    groups: ls('px_groups') || [],
+    expenses: ls('px_expenses') || [],
+    exportedAt: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = 'phantorax-data-' + new Date().toISOString().split('T')[0] + '.json';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Data exported!', 'success');
+}
+
+function confirmClearData() {
+  if (!confirm('This will delete ALL your groups, expenses, and profile data. Are you sure?')) return;
+  if (!confirm('Last chance — this cannot be undone!')) return;
+  ['px_user','px_groups','px_expenses'].forEach(k => localStorage.removeItem(k));
+  showToast('All data cleared', 'error');
+  setTimeout(() => location.reload(), 1000);
+}
+
+// ══════════════════════════════════════════════════
+//  MODAL HELPERS
+// ══════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.add('hidden'); });
+});
+
+// ══════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════
+function escHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;');
+}
+function cssId(s) { return (s||'').replace(/[^a-zA-Z0-9]/g,'_'); }
+
+// ══════════════════════════════════════════════════
+//  PROFILE LINKS INITIALIZATION
+// ══════════════════════════════════════════════════
+function ensureUserLinks() {
+  const user = ls('px_user') || {};
+  if (!Array.isArray(user.links)) { user.links = ['','','','','']; lsSet('px_user', user); }
+}
+
+// ══════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════
+ensureUserLinks();
+init();
+</script>
+</body>
+</html>
