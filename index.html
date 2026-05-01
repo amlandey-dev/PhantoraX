@@ -4,680 +4,230 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>PhantoraX — Bill Splitter</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
-  :root {
-    --bg0: #04050a;
-    --bg1: #080c14;
-    --bg2: #0d1320;
-    --bg3: #121a2b;
-    --bg4: #192236;
-    --card: #0f1624;
-    --border: #1e2d47;
-    --border2: #243452;
-    --accent: #00d4ff;
-    --accent2: #7c3aed;
-    --accent3: #06ffa5;
-    --accent4: #ff6b35;
-    --danger: #ff3860;
-    --warn: #ffd166;
-    --text: #e8edf5;
-    --text2: #8a9bb8;
-    --text3: #4a5d7a;
-    --glow: 0 0 20px rgba(0,212,255,0.3);
-    --glow2: 0 0 20px rgba(124,58,237,0.3);
-    --radius: 14px;
-    --radius-sm: 8px;
-    --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
-  }
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-  html{scroll-behavior:smooth;}
-  body{
-    background:var(--bg0);
-    color:var(--text);
-    font-family:'Rajdhani',sans-serif;
-    font-size:16px;
-    min-height:100vh;
-    overflow-x:hidden;
-    line-height:1.5;
-  }
-  /* Noise texture overlay */
-  body::before{
-    content:'';
-    position:fixed;
-    inset:0;
-    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events:none;
-    z-index:9999;
-    opacity:0.4;
-  }
+:root{
+  --bg0:#04050a;--bg1:#080c14;--bg2:#0d1320;--bg3:#121a2b;--bg4:#192236;
+  --card:#0f1624;--border:#1e2d47;--border2:#243452;
+  --accent:#00d4ff;--accent2:#7c3aed;--accent3:#06ffa5;
+  --danger:#ff3860;--warn:#ffd166;
+  --text:#e8edf5;--text2:#8a9bb8;--text3:#4a5d7a;
+  --glow:0 0 20px rgba(0,212,255,.3);
+  --r:14px;--rs:8px;--tr:.22s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:16px;min-height:100vh;overflow-x:hidden;line-height:1.5;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:var(--bg1);}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
 
-  /* ── SCROLLBAR ── */
-  ::-webkit-scrollbar{width:4px;}
-  ::-webkit-scrollbar-track{background:var(--bg1);}
-  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+/* ONBOARDING */
+#onboarding{position:fixed;inset:0;background:var(--bg0);display:flex;align-items:center;justify-content:center;z-index:1000;transition:opacity .5s,transform .5s;}
+#onboarding.hidden{opacity:0;pointer-events:none;transform:scale(.96);}
+.ob-box{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:48px 40px;width:min(460px,92vw);text-align:center;box-shadow:0 0 80px rgba(0,212,255,.08);animation:fadeUp .6s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:none;}}
+.ob-logo{font-family:'Orbitron',monospace;font-size:2.4rem;font-weight:900;letter-spacing:.05em;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;}
+.ob-sub{color:var(--text2);font-size:.9rem;margin-bottom:32px;letter-spacing:.08em;text-transform:uppercase;}
+.ob-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:13px 16px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:500;outline:none;transition:border-color var(--tr),box-shadow var(--tr);margin-bottom:16px;}
+.ob-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,.12);}
+.ob-label{display:block;text-align:left;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);margin-bottom:8px;font-weight:600;}
+.divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--text3);font-size:.8rem;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
 
-  /* ── GRID BACKGROUND ── */
-  .grid-bg{
-    position:fixed;inset:0;
-    background-image:
-      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
-    background-size:40px 40px;
-    pointer-events:none;z-index:0;
-  }
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border-radius:var(--rs);font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;border:none;transition:all var(--tr);user-select:none;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#0096cc);color:#000;}
+.btn-primary:hover{filter:brightness(1.15);box-shadow:var(--glow);}
+.btn-secondary{background:transparent;border:1px solid var(--border2);color:var(--text2);}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:rgba(255,56,96,.15);border:1px solid rgba(255,56,96,.4);color:var(--danger);}
+.btn-danger:hover{background:rgba(255,56,96,.25);}
+.btn-sm{padding:7px 14px;font-size:.82rem;}
+.btn-full{width:100%;}
+.btn-host{background:linear-gradient(135deg,#00d4ff,#0077aa);color:#000;font-weight:800;border:none;box-shadow:0 4px 18px rgba(0,212,255,.28);}
+.btn-host:hover{filter:brightness(1.1);box-shadow:0 6px 28px rgba(0,212,255,.45);}
+.btn-host:disabled,.btn-join:disabled{opacity:.55;cursor:not-allowed;filter:none !important;}
+.btn-join{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-weight:800;border:none;box-shadow:0 4px 18px rgba(124,58,237,.3);}
+.btn-join:hover{filter:brightness(1.1);box-shadow:0 6px 28px rgba(124,58,237,.48);}
 
-  /* ── ONBOARDING ── */
-  #onboarding{
-    position:fixed;inset:0;
-    background:var(--bg0);
-    display:flex;align-items:center;justify-content:center;
-    z-index:1000;
-    flex-direction:column;
-    gap:0;
-    transition:opacity 0.5s, transform 0.5s;
-  }
-  #onboarding.hidden{opacity:0;pointer-events:none;transform:scale(0.96);}
-  .onboard-box{
-    background:var(--card);
-    border:1px solid var(--border2);
-    border-radius:20px;
-    padding:48px 40px;
-    width:min(460px,92vw);
-    text-align:center;
-    position:relative;
-    box-shadow:0 0 80px rgba(0,212,255,0.08), 0 0 0 1px rgba(0,212,255,0.06);
-    animation:fadeUp 0.6s ease both;
-  }
-  @keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
-  .onboard-logo{
-    font-family:'Orbitron',monospace;
-    font-size:2.4rem;
-    font-weight:900;
-    letter-spacing:0.05em;
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-    margin-bottom:6px;
-  }
-  .onboard-sub{color:var(--text2);font-size:0.9rem;margin-bottom:32px;letter-spacing:0.08em;text-transform:uppercase;}
-  .onboard-label{
-    display:block;text-align:left;font-size:0.8rem;
-    letter-spacing:0.1em;text-transform:uppercase;
-    color:var(--text2);margin-bottom:8px;font-weight:600;
-  }
-  .onboard-input{
-    width:100%;background:var(--bg3);border:1px solid var(--border2);
-    border-radius:var(--radius-sm);padding:13px 16px;
-    color:var(--text);font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:500;
-    outline:none;transition:border-color var(--transition), box-shadow var(--transition);
-    margin-bottom:16px;
-  }
-  .onboard-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,0.12);}
-  .btn{
-    display:inline-flex;align-items:center;justify-content:center;gap:8px;
-    padding:12px 24px;border-radius:var(--radius-sm);
-    font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:700;
-    letter-spacing:0.05em;text-transform:uppercase;
-    cursor:pointer;border:none;transition:all var(--transition);
-    text-decoration:none;user-select:none;
-  }
-  .btn-primary{background:linear-gradient(135deg,var(--accent),#0096cc);color:#000;}
-  .btn-primary:hover{filter:brightness(1.15);box-shadow:var(--glow);}
-  .btn-secondary{background:transparent;border:1px solid var(--border2);color:var(--text2);}
-  .btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
-  .btn-ghost{background:transparent;color:var(--text2);padding:8px 12px;}
-  .btn-ghost:hover{color:var(--accent);}
-  .btn-danger{background:rgba(255,56,96,0.15);border:1px solid rgba(255,56,96,0.4);color:var(--danger);}
-  .btn-danger:hover{background:rgba(255,56,96,0.25);}
-  .btn-sm{padding:7px 14px;font-size:0.82rem;}
-  .btn-full{width:100%;}
-  .divider{
-    display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--text3);font-size:0.8rem;
-  }
-  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+/* APP */
+#app{min-height:100vh;display:flex;flex-direction:column;position:relative;z-index:1;}
+#app.hidden{display:none;}
+.topbar{position:sticky;top:0;z-index:100;background:rgba(4,5,10,.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between;}
+.topbar-logo{font-family:'Orbitron',monospace;font-weight:900;font-size:1.2rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));border:2px solid var(--accent);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:#fff;}
+.av img{width:100%;height:100%;object-fit:cover;}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(8,12,20,.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;height:64px;}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;background:none;border:none;color:var(--text3);font-family:'Rajdhani',sans-serif;font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;transition:color var(--tr);position:relative;}
+.nav-btn.active{color:var(--accent);}
+.nav-btn.active::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:32px;height:2px;background:var(--accent);border-radius:0 0 2px 2px;box-shadow:0 0 8px var(--accent);}
+.nav-btn svg{width:22px;height:22px;stroke-width:1.8;}
+.main{flex:1;padding:20px 20px 84px;max-width:720px;margin:0 auto;width:100%;}
 
-  /* ── APP SHELL ── */
-  #app{
-    min-height:100vh;
-    display:flex;flex-direction:column;
-    position:relative;z-index:1;
-  }
-  #app.hidden{display:none;}
+/* VIEWS */
+.view{display:none;}
+.view.active{display:block;animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
 
-  /* ── TOP BAR ── */
-  .topbar{
-    position:sticky;top:0;z-index:100;
-    background:rgba(4,5,10,0.85);
-    backdrop-filter:blur(20px);
-    border-bottom:1px solid var(--border);
-    padding:0 20px;
-    height:60px;
-    display:flex;align-items:center;justify-content:space-between;
-  }
-  .topbar-logo{
-    font-family:'Orbitron',monospace;font-weight:900;font-size:1.2rem;
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-    letter-spacing:0.04em;
-  }
-  .topbar-right{display:flex;align-items:center;gap:10px;}
-  .avatar-btn{
-    width:36px;height:36px;border-radius:50%;
-    background:linear-gradient(135deg,var(--accent2),var(--accent));
-    border:2px solid var(--accent);
-    cursor:pointer;overflow:hidden;
-    display:flex;align-items:center;justify-content:center;
-    font-weight:700;font-size:0.9rem;color:#fff;
-    transition:box-shadow var(--transition);
-  }
-  .avatar-btn:hover{box-shadow:var(--glow);}
-  .avatar-btn img{width:100%;height:100%;object-fit:cover;}
+/* TYPE */
+.sec-title{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;letter-spacing:.06em;margin-bottom:4px;}
+.sec-sub{color:var(--text2);font-size:.88rem;margin-bottom:20px;}
+.row-bw{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
 
-  /* ── BOTTOM NAV ── */
-  .bottom-nav{
-    position:fixed;bottom:0;left:0;right:0;z-index:100;
-    background:rgba(8,12,20,0.95);
-    backdrop-filter:blur(20px);
-    border-top:1px solid var(--border);
-    display:flex;
-    height:64px;
-    padding-bottom:env(safe-area-inset-bottom,0);
-  }
-  .nav-btn{
-    flex:1;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;
-    gap:3px;cursor:pointer;
-    background:none;border:none;
-    color:var(--text3);font-family:'Rajdhani',sans-serif;
-    font-size:0.7rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
-    transition:color var(--transition);
-    position:relative;
-  }
-  .nav-btn.active{color:var(--accent);}
-  .nav-btn.active::after{
-    content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
-    width:32px;height:2px;background:var(--accent);
-    border-radius:0 0 2px 2px;box-shadow:0 0 8px var(--accent);
-  }
-  .nav-btn svg{width:22px;height:22px;stroke-width:1.8;}
-  .nav-btn:hover{color:var(--text);}
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:14px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,.3),transparent);opacity:0;transition:opacity var(--tr);}
+.card:hover::before{opacity:1;}
 
-  /* ── MAIN CONTENT ── */
-  .main{
-    flex:1;
-    padding:20px 20px 80px;
-    max-width:720px;
-    margin:0 auto;
-    width:100%;
-  }
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;}
+.stat-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-weight:600;}
+.stat-val{font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:700;margin-top:4px;}
+.blue{color:var(--accent);}.green{color:var(--accent3);}.red{color:var(--danger);}.purple{color:var(--accent2);}
 
-  /* ── VIEWS ── */
-  .view{display:none;}
-  .view.active{display:block;animation:fadeIn 0.25s ease;}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+/* FORMS */
+.fg{margin-bottom:18px;}
+.fl{display:block;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);margin-bottom:7px;font-weight:600;}
+.fi,.fs,.ft{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:11px 14px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.97rem;font-weight:500;outline:none;transition:border-color var(--tr),box-shadow var(--tr);appearance:none;}
+.fi:focus,.fs:focus,.ft:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,.1);}
+.fi:disabled,.fs:disabled{opacity:.5;cursor:not-allowed;}
+.ft{resize:vertical;min-height:80px;}
+.fs{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a9bb8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:36px;cursor:pointer;}
+.fs option{background:var(--bg2);}
 
-  /* ── SECTION TITLE ── */
-  .sec-title{
-    font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;
-    letter-spacing:0.06em;color:var(--text);margin-bottom:4px;
-  }
-  .sec-sub{color:var(--text2);font-size:0.88rem;margin-bottom:20px;}
-  .row-between{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;}
+.b-blue{background:rgba(0,212,255,.12);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+.b-green{background:rgba(6,255,165,.1);color:var(--accent3);border:1px solid rgba(6,255,165,.2);}
+.b-red{background:rgba(255,56,96,.12);color:var(--danger);border:1px solid rgba(255,56,96,.2);}
+.b-purple{background:rgba(124,58,237,.12);color:#a78bfa;border:1px solid rgba(124,58,237,.2);}
+.b-yellow{background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.2);}
+.b-teal{background:rgba(6,255,165,.08);color:var(--accent3);border:1px solid rgba(6,255,165,.2);}
 
-  /* ── CARDS ── */
-  .card{
-    background:var(--card);border:1px solid var(--border);
-    border-radius:var(--radius);padding:20px;margin-bottom:14px;
-    transition:border-color var(--transition),box-shadow var(--transition);
-    position:relative;overflow:hidden;
-  }
-  .card::before{
-    content:'';position:absolute;top:0;left:0;right:0;height:1px;
-    background:linear-gradient(90deg,transparent,rgba(0,212,255,0.3),transparent);
-    opacity:0;transition:opacity var(--transition);
-  }
-  .card:hover{border-color:var(--border2);}
-  .card:hover::before{opacity:1;}
-  .card-clickable{cursor:pointer;}
-  .card-clickable:hover{border-color:rgba(0,212,255,0.4);box-shadow:0 4px 24px rgba(0,212,255,0.06);}
+/* CHIPS */
+.chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;background:var(--bg3);border:1px solid var(--border2);font-size:.82rem;font-weight:600;color:var(--text2);cursor:pointer;transition:all var(--tr);user-select:none;}
+.chip.sel{background:rgba(0,212,255,.12);border-color:var(--accent);color:var(--accent);}
 
-  /* ── STAT CARDS ── */
-  .stats-grid{
-    display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;
-  }
-  .stat-card{
-    background:var(--card);border:1px solid var(--border);
-    border-radius:var(--radius);padding:16px;
-    position:relative;overflow:hidden;
-  }
-  .stat-card::after{
-    content:'';position:absolute;bottom:-20px;right:-20px;
-    width:80px;height:80px;border-radius:50%;
-    background:radial-gradient(circle,rgba(0,212,255,0.08),transparent);
-  }
-  .stat-label{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-weight:600;}
-  .stat-value{font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:700;margin-top:4px;}
-  .stat-value.green{color:var(--accent3);}
-  .stat-value.red{color:var(--danger);}
-  .stat-value.blue{color:var(--accent);}
-  .stat-value.purple{color:var(--accent2);}
+/* TABS */
+.tab-bar{display:flex;gap:2px;background:var(--bg2);border-radius:10px;padding:3px;margin-bottom:20px;}
+.tab{flex:1;padding:8px;text-align:center;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);transition:all var(--tr);}
+.tab.active{background:var(--bg4);color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.3);}
 
-  /* ── FORM ELEMENTS ── */
-  .form-group{margin-bottom:18px;}
-  .form-label{
-    display:block;font-size:0.78rem;letter-spacing:0.1em;
-    text-transform:uppercase;color:var(--text2);margin-bottom:7px;font-weight:600;
-  }
-  .form-input,.form-select,.form-textarea{
-    width:100%;background:var(--bg3);border:1px solid var(--border2);
-    border-radius:var(--radius-sm);padding:11px 14px;
-    color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.97rem;font-weight:500;
-    outline:none;transition:border-color var(--transition),box-shadow var(--transition);
-    appearance:none;
-  }
-  .form-input:focus,.form-select:focus,.form-textarea:focus{
-    border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,0.1);
-  }
-  .form-textarea{resize:vertical;min-height:80px;}
-  .form-select{
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a9bb8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat:no-repeat;background-position:right 12px center;background-size:16px;
-    padding-right:36px;cursor:pointer;
-  }
-  .form-select option{background:var(--bg2);}
+/* GROUP CARD */
+.g-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:12px;cursor:pointer;transition:all var(--tr);display:flex;align-items:flex-start;gap:14px;position:relative;overflow:hidden;}
+.g-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--accent),var(--accent2));opacity:0;transition:opacity var(--tr);}
+.g-card:hover{border-color:rgba(0,212,255,.35);transform:translateX(3px);}
+.g-card:hover::before{opacity:1;}
+.g-icon{width:44px;height:44px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,var(--bg4),var(--bg3));border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:1.3rem;}
 
-  /* ── CHECKBOX / TOGGLE ── */
-  .checkbox-row{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
-  .checkbox-box{
-    width:18px;height:18px;border:1px solid var(--border2);border-radius:4px;
-    background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;
-    transition:all var(--transition);
-  }
-  .checkbox-row.checked .checkbox-box{background:var(--accent);border-color:var(--accent);}
-  .checkbox-row.checked .checkbox-box::after{
-    content:'✓';color:#000;font-size:0.7rem;font-weight:700;
-  }
+/* EXPENSE ITEM */
+.exp-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;}
+.exp-ico{width:38px;height:38px;border-radius:8px;flex-shrink:0;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1rem;}
 
-  /* ── TAGS / BADGES ── */
-  .badge{
-    display:inline-flex;align-items:center;gap:5px;
-    padding:3px 10px;border-radius:20px;
-    font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
-  }
-  .badge-blue{background:rgba(0,212,255,0.12);color:var(--accent);border:1px solid rgba(0,212,255,0.2);}
-  .badge-green{background:rgba(6,255,165,0.1);color:var(--accent3);border:1px solid rgba(6,255,165,0.2);}
-  .badge-red{background:rgba(255,56,96,0.12);color:var(--danger);border:1px solid rgba(255,56,96,0.2);}
-  .badge-purple{background:rgba(124,58,237,0.12);color:#a78bfa;border:1px solid rgba(124,58,237,0.2);}
-  .badge-orange{background:rgba(255,107,53,0.12);color:var(--accent4);border:1px solid rgba(255,107,53,0.2);}
-  .badge-yellow{background:rgba(255,209,102,0.12);color:var(--warn);border:1px solid rgba(255,209,102,0.2);}
+/* SPLIT */
+.split-grid{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+.split-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 12px;background:var(--bg3);border-radius:var(--rs);border:1px solid var(--border);}
+.split-inp{width:80px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.9rem;outline:none;text-align:right;}
+.split-inp:focus{border-color:var(--accent);}
 
-  /* ── GROUP CARD ── */
-  .group-card{
-    background:var(--card);border:1px solid var(--border);
-    border-radius:var(--radius);padding:18px 20px;margin-bottom:12px;
-    cursor:pointer;transition:all var(--transition);
-    display:flex;align-items:center;gap:16px;
-    position:relative;overflow:hidden;
-  }
-  .group-card::before{
-    content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
-    background:linear-gradient(180deg,var(--accent),var(--accent2));
-    opacity:0;transition:opacity var(--transition);
-  }
-  .group-card:hover{border-color:rgba(0,212,255,0.35);transform:translateX(3px);}
-  .group-card:hover::before{opacity:1;}
-  .group-icon{
-    width:44px;height:44px;border-radius:10px;flex-shrink:0;
-    background:linear-gradient(135deg,var(--bg4),var(--bg3));
-    border:1px solid var(--border2);
-    display:flex;align-items:center;justify-content:center;font-size:1.2rem;
-  }
-  .group-info{flex:1;min-width:0;}
-  .group-name{font-weight:700;font-size:1rem;color:var(--text);margin-bottom:3px;}
-  .group-meta{font-size:0.8rem;color:var(--text2);}
-  .group-balance{text-align:right;font-family:'JetBrains Mono',monospace;font-size:0.9rem;font-weight:600;}
+/* DEBT */
+.debt-row{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:8px;flex-wrap:wrap;}
 
-  /* ── EXPENSE ITEM ── */
-  .expense-item{
-    background:var(--bg2);border:1px solid var(--border);
-    border-radius:var(--radius-sm);padding:14px 16px;
-    margin-bottom:8px;display:flex;align-items:center;gap:14px;
-    transition:border-color var(--transition);
-  }
-  .expense-item:hover{border-color:var(--border2);}
-  .expense-icon-wrap{
-    width:38px;height:38px;border-radius:8px;flex-shrink:0;
-    background:var(--bg3);border:1px solid var(--border);
-    display:flex;align-items:center;justify-content:center;font-size:1rem;
-  }
-  .expense-info{flex:1;min-width:0;}
-  .expense-desc{font-weight:600;font-size:0.95rem;color:var(--text);}
-  .expense-meta{font-size:0.78rem;color:var(--text2);margin-top:2px;}
-  .expense-amount{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1rem;color:var(--text);white-space:nowrap;}
+/* SUGGESTION */
+.sug-box{background:linear-gradient(135deg,rgba(124,58,237,.15),rgba(0,212,255,.08));border:1px solid rgba(124,58,237,.3);border-radius:var(--r);padding:16px 20px;margin-bottom:20px;position:relative;}
+.sug-box::after{content:'★';position:absolute;right:16px;top:12px;font-size:1.5rem;opacity:.12;}
+.sug-title{font-family:'Orbitron',monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#a78bfa;margin-bottom:6px;font-weight:700;}
 
-  /* ── DEBT SETTLEMENT ── */
-  .debt-row{
-    display:flex;align-items:center;gap:12px;padding:12px 16px;
-    background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);
-    margin-bottom:8px;
-  }
-  .debt-from{font-weight:600;color:var(--danger);}
-  .debt-arrow{color:var(--text3);font-size:0.8rem;}
-  .debt-to{font-weight:600;color:var(--accent3);}
-  .debt-amount{margin-left:auto;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--warn);}
+/* PROFILE */
+.prof-hdr{display:flex;flex-direction:column;align-items:center;padding:28px 20px;margin-bottom:20px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);position:relative;overflow:hidden;}
+.prof-hdr::before{content:'';position:absolute;top:0;left:0;right:0;height:80px;background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(124,58,237,.08));}
+.prof-av{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.8rem;color:#fff;margin-bottom:12px;cursor:pointer;overflow:hidden;position:relative;z-index:1;box-shadow:var(--glow);}
+.prof-av img{width:100%;height:100%;object-fit:cover;}
 
-  /* ── MEMBER CHIPS ── */
-  .member-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
-  .chip{
-    display:flex;align-items:center;gap:6px;
-    padding:5px 12px;border-radius:20px;
-    background:var(--bg3);border:1px solid var(--border2);
-    font-size:0.82rem;font-weight:600;color:var(--text2);cursor:pointer;
-    transition:all var(--transition);user-select:none;
-  }
-  .chip.selected{background:rgba(0,212,255,0.12);border-color:var(--accent);color:var(--accent);}
-  .chip:hover{border-color:var(--text3);}
-  .chip .remove-btn{
-    width:14px;height:14px;display:flex;align-items:center;justify-content:center;
-    background:rgba(255,56,96,0.3);border-radius:50%;font-size:0.65rem;color:var(--danger);
-    line-height:1;
-  }
+/* MODAL */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);z-index:500;display:flex;align-items:flex-end;justify-content:center;}
+.modal-ov.hidden{display:none;}
+.modal{background:var(--bg1);border:1px solid var(--border2);border-radius:20px 20px 0 0;padding:24px 24px 36px;width:min(600px,100vw);max-height:92vh;overflow-y:auto;animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:none;}}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-title{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;letter-spacing:.04em;}
+.modal-close{width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:1rem;transition:all var(--tr);}
+.modal-close:hover{background:var(--danger);color:#fff;border-color:var(--danger);}
 
-  /* ── SPLIT SECTION ── */
-  .split-grid{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
-  .split-row{
-    display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
-    padding:8px 12px;background:var(--bg3);border-radius:var(--radius-sm);
-    border:1px solid var(--border);
-  }
-  .split-name{font-weight:600;font-size:0.9rem;}
-  .split-input-wrap{display:flex;align-items:center;gap:6px;}
-  .split-input{
-    width:80px;background:var(--bg2);border:1px solid var(--border2);
-    border-radius:6px;padding:6px 10px;color:var(--text);
-    font-family:'JetBrains Mono',monospace;font-size:0.9rem;outline:none;
-    text-align:right;
-  }
-  .split-input:focus{border-color:var(--accent);}
-  .split-unit{color:var(--text3);font-size:0.8rem;width:20px;}
+/* ROOM MODE TOGGLE */
+.rm-toggle{display:grid;grid-template-columns:1fr 1fr;background:var(--bg2);border-radius:12px;padding:4px;margin-bottom:22px;gap:4px;}
+.rm-tab{padding:10px;text-align:center;border-radius:9px;cursor:pointer;font-size:.82rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);transition:all var(--tr);border:1px solid transparent;}
+.rm-tab.host-a{background:rgba(0,212,255,.1);color:var(--accent);border-color:rgba(0,212,255,.3);}
+.rm-tab.join-a{background:rgba(124,58,237,.12);color:#a78bfa;border-color:rgba(124,58,237,.3);}
 
-  /* ── SUGGESTION BOX ── */
-  .suggestion-box{
-    background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(0,212,255,0.08));
-    border:1px solid rgba(124,58,237,0.3);
-    border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;
-    position:relative;overflow:hidden;
-  }
-  .suggestion-box::after{
-    content:'★';position:absolute;right:16px;top:12px;
-    font-size:1.5rem;opacity:0.15;
-  }
-  .suggestion-title{
-    font-family:'Orbitron',monospace;font-size:0.75rem;
-    letter-spacing:0.12em;text-transform:uppercase;
-    color:#a78bfa;margin-bottom:6px;font-weight:700;
-  }
-  .suggestion-text{font-size:0.95rem;color:var(--text);font-weight:500;}
+/* PASSWORD INPUT */
+.pw-wrap{position:relative;}
+.pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--text3);font-size:.9rem;user-select:none;}
+.pw-wrap .fi{padding-right:40px;font-family:'JetBrains Mono',monospace;letter-spacing:.05em;}
 
-  /* ── PROFILE ── */
-  .profile-header{
-    display:flex;flex-direction:column;align-items:center;
-    padding:28px 20px;margin-bottom:20px;
-    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
-    position:relative;overflow:hidden;
-  }
-  .profile-header::before{
-    content:'';position:absolute;top:0;left:0;right:0;height:80px;
-    background:linear-gradient(135deg,rgba(0,212,255,0.08),rgba(124,58,237,0.08));
-  }
-  .profile-avatar{
-    width:80px;height:80px;border-radius:50%;
-    background:linear-gradient(135deg,var(--accent2),var(--accent));
-    border:3px solid var(--accent);
-    display:flex;align-items:center;justify-content:center;
-    font-weight:700;font-size:1.8rem;color:#fff;
-    margin-bottom:12px;cursor:pointer;overflow:hidden;
-    position:relative;z-index:1;
-    box-shadow:var(--glow);
-    transition:all var(--transition);
-  }
-  .profile-avatar:hover{transform:scale(1.05);}
-  .profile-avatar img{width:100%;height:100%;object-fit:cover;}
-  .profile-name-display{
-    font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;
-    color:var(--text);margin-bottom:4px;z-index:1;position:relative;
-  }
-  .profile-since{font-size:0.8rem;color:var(--text3);z-index:1;position:relative;}
+/* EMOJI PICKER */
+.em-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.em-opt{width:36px;height:36px;border-radius:8px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;cursor:pointer;transition:all var(--tr);}
+.em-opt:hover,.em-opt.sel{background:rgba(0,212,255,.1);border-color:var(--accent);}
 
-  /* ── LINKS ── */
-  .links-list{display:flex;flex-direction:column;gap:8px;}
-  .link-row{display:flex;gap:8px;align-items:center;}
-  .link-row .form-input{flex:1;}
+/* ROOM CODE BOX */
+.code-box{background:var(--bg2);border:1px solid rgba(0,212,255,.3);border-radius:var(--rs);padding:14px 16px;margin-top:8px;animation:fadeIn .3s ease;}
+.code-lbl{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-weight:700;margin-bottom:8px;}
+.code-val{font-family:'JetBrains Mono',monospace;font-size:.88rem;font-weight:700;color:var(--accent);word-break:break-all;line-height:1.7;padding:8px;background:var(--bg0);border-radius:6px;border:1px solid var(--border);}
+.code-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.copy-btn{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);border-radius:6px;padding:5px 12px;cursor:pointer;font-size:.75rem;font-weight:700;color:var(--accent);letter-spacing:.05em;text-transform:uppercase;transition:all var(--tr);}
+.copy-btn:hover{background:rgba(0,212,255,.2);}
+.share-btn{background:rgba(6,255,165,.08);border:1px solid rgba(6,255,165,.3);border-radius:6px;padding:5px 12px;cursor:pointer;font-size:.75rem;font-weight:700;color:var(--accent3);letter-spacing:.05em;text-transform:uppercase;transition:all var(--tr);}
+.share-btn:hover{background:rgba(6,255,165,.15);}
 
-  /* ── MODAL ── */
-  .modal-overlay{
-    position:fixed;inset:0;background:rgba(0,0,0,0.7);
-    backdrop-filter:blur(8px);z-index:500;
-    display:flex;align-items:flex-end;justify-content:center;
-  }
-  .modal-overlay.hidden{display:none;}
-  .modal{
-    background:var(--bg1);border:1px solid var(--border2);
-    border-radius:20px 20px 0 0;
-    padding:24px 24px 32px;
-    width:min(580px,100vw);
-    max-height:90vh;overflow-y:auto;
-    animation:slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
-  }
-  @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
-  .modal-header{
-    display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;
-  }
-  .modal-title{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;letter-spacing:0.04em;}
-  .modal-close{
-    width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);
-    cursor:pointer;display:flex;align-items:center;justify-content:center;
-    color:var(--text2);font-size:1rem;transition:all var(--transition);
-  }
-  .modal-close:hover{background:var(--danger);color:#fff;border-color:var(--danger);}
+/* JOIN PREVIEW */
+.join-preview{background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(0,212,255,.06));border:1px solid rgba(124,58,237,.3);border-radius:var(--rs);padding:16px;margin-bottom:16px;animation:fadeIn .25s ease;}
+.jp-top{display:flex;align-items:center;gap:14px;margin-bottom:12px;}
+.jp-emoji{font-size:2rem;width:52px;height:52px;border-radius:12px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.jp-name{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;}
+.jp-meta{font-size:.8rem;color:var(--text2);margin-top:3px;}
+.member-chip{display:inline-flex;padding:3px 10px;border-radius:20px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.15);font-size:.75rem;font-weight:600;color:var(--text2);margin:2px;}
 
-  /* ── GROUP DETAIL VIEW ── */
-  .back-btn{
-    display:flex;align-items:center;gap:8px;
-    color:var(--text2);font-size:0.85rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
-    cursor:pointer;margin-bottom:20px;width:fit-content;
-    transition:color var(--transition);
-  }
-  .back-btn:hover{color:var(--accent);}
+/* SPINNER */
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(0,212,255,.3);border-top-color:var(--accent);border-radius:50%;animation:rot .7s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes rot{to{transform:rotate(360deg);}}
 
-  /* ── TAB BAR ── */
-  .tab-bar{display:flex;gap:2px;background:var(--bg2);border-radius:10px;padding:3px;margin-bottom:20px;}
-  .tab{
-    flex:1;padding:8px;text-align:center;
-    border-radius:8px;cursor:pointer;
-    font-size:0.8rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
-    color:var(--text3);transition:all var(--transition);
-  }
-  .tab.active{background:var(--bg4);color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,0.3);}
+/* STATUS LINE */
+.status-line{font-size:.78rem;min-height:20px;margin-top:5px;}
+.s-ok{color:var(--accent3);}.s-err{color:var(--danger);}.s-info{color:var(--text3);}
 
-  /* ── TOAST ── */
-  #toast{
-    position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
-    background:var(--bg4);border:1px solid var(--border2);border-radius:10px;
-    padding:10px 20px;font-size:0.88rem;font-weight:600;color:var(--text);
-    z-index:9998;opacity:0;transition:all 0.3s;pointer-events:none;
-    white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.4);
-  }
-  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-  #toast.success{border-color:var(--accent3);color:var(--accent3);}
-  #toast.error{border-color:var(--danger);color:var(--danger);}
+/* TOAST */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg4);border:1px solid var(--border2);border-radius:10px;padding:10px 20px;font-size:.88rem;font-weight:600;color:var(--text);z-index:9998;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.ok{border-color:var(--accent3);color:var(--accent3);}
+#toast.er{border-color:var(--danger);color:var(--danger);}
 
-  /* ── EMPTY STATE ── */
-  .empty{
-    text-align:center;padding:48px 20px;color:var(--text3);
-  }
-  .empty-icon{font-size:2.5rem;margin-bottom:12px;opacity:0.5;}
-  .empty-title{font-weight:700;font-size:1rem;color:var(--text2);margin-bottom:6px;}
-  .empty-sub{font-size:0.85rem;}
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--text3);}
+.empty-ico{font-size:2.5rem;margin-bottom:12px;opacity:.5;}
+.empty-t{font-weight:700;font-size:1rem;color:var(--text2);margin-bottom:6px;}
 
-  /* ── MEMBER ADD ROW ── */
-  .add-member-row{display:flex;gap:8px;}
-  .add-member-row .form-input{flex:1;}
+/* BACK */
+.back-btn{display:flex;align-items:center;gap:8px;color:var(--text2);font-size:.85rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;margin-bottom:20px;width:fit-content;transition:color var(--tr);}
+.back-btn:hover{color:var(--accent);}
 
-  /* ── CREDIT ── */
-  .credit{
-    text-align:center;padding:16px;
-    font-size:0.72rem;color:var(--text3);
-    letter-spacing:0.06em;text-transform:uppercase;
-    border-top:1px solid var(--border);margin-top:20px;
-  }
-  .credit span{color:var(--accent);font-weight:700;}
+/* QA */
+.qa-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px;}
+.qa-btn{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;cursor:pointer;transition:all var(--tr);display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
+.qa-btn:hover{border-color:rgba(0,212,255,.4);transform:translateY(-2px);}
+.qa-ico{font-size:1.4rem;}
+.qa-lbl{font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);}
 
-  /* ── FAB ── */
-  .fab{
-    position:fixed;right:20px;bottom:80px;
-    width:52px;height:52px;border-radius:50%;
-    background:linear-gradient(135deg,var(--accent),#0096cc);
-    color:#000;font-size:1.5rem;font-weight:300;
-    border:none;cursor:pointer;box-shadow:0 4px 20px rgba(0,212,255,0.4);
-    display:flex;align-items:center;justify-content:center;
-    transition:all var(--transition);z-index:50;
-  }
-  .fab:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(0,212,255,0.5);}
-  .fab.hidden{display:none;}
+/* MISC */
+.glow-line{height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);margin:20px 0;opacity:.3;}
+.pfx-wrap{position:relative;}
+.pfx{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--accent);font-weight:700;font-size:1rem;font-family:'JetBrains Mono',monospace;pointer-events:none;}
+.pfx-wrap .fi{padding-left:30px;}
+.credit{text-align:center;padding:16px;font-size:.72rem;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;border-top:1px solid var(--border);margin-top:20px;}
+.credit span{color:var(--accent);font-weight:700;}
+.info-box{background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(0,212,255,.05));border:1px solid rgba(124,58,237,.2);border-radius:var(--rs);padding:14px 16px;font-size:.85rem;color:var(--text2);line-height:1.6;margin-bottom:18px;}
 
-  /* ── HOME QUICK ACTIONS ── */
-  .quick-actions{
-    display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px;
-  }
-  .qa-btn{
-    background:var(--card);border:1px solid var(--border);
-    border-radius:var(--radius);padding:16px;
-    cursor:pointer;transition:all var(--transition);
-    display:flex;flex-direction:column;align-items:flex-start;gap:8px;
-    text-align:left;
-  }
-  .qa-btn:hover{border-color:rgba(0,212,255,0.4);transform:translateY(-2px);}
-  .qa-icon{font-size:1.4rem;}
-  .qa-label{font-size:0.8rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2);}
-
-  /* ── PROGRESS BAR ── */
-  .progress-bar{
-    height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:8px;
-  }
-  .progress-fill{
-    height:100%;border-radius:2px;
-    background:linear-gradient(90deg,var(--accent),var(--accent3));
-    transition:width 0.5s ease;
-  }
-
-  /* ── RESPONSIVE ── */
-  @media(max-width:480px){
-    .stats-grid{grid-template-columns:repeat(2,1fr);}
-    .onboard-box{padding:32px 24px;}
-    .onboard-logo{font-size:2rem;}
-    .main{padding:16px 16px 80px;}
-    .quick-actions{grid-template-columns:repeat(2,1fr);}
-  }
-
-  /* ── GLOWING LINE ── */
-  .glow-line{
-    height:1px;
-    background:linear-gradient(90deg,transparent,var(--accent),transparent);
-    margin:20px 0;opacity:0.3;
-  }
-
-  /* ── INPUT WITH PREFIX ── */
-  .input-with-prefix{position:relative;}
-  .input-prefix{
-    position:absolute;left:12px;top:50%;transform:translateY(-50%);
-    color:var(--accent);font-weight:700;font-size:1rem;font-family:'JetBrains Mono',monospace;
-    pointer-events:none;
-  }
-  .input-with-prefix .form-input{padding-left:30px;}
-
-  /* ── HOST / JOIN BUTTONS ── */
-  .btn-host{
-    background:linear-gradient(135deg,#00d4ff,#0077aa);
-    color:#000;font-weight:800;letter-spacing:0.08em;
-    border:none;
-    box-shadow:0 4px 18px rgba(0,212,255,0.28);
-  }
-  .btn-host:hover{filter:brightness(1.12);box-shadow:0 6px 28px rgba(0,212,255,0.45);}
-  .btn-join{
-    background:linear-gradient(135deg,#7c3aed,#a855f7);
-    color:#fff;font-weight:800;letter-spacing:0.08em;
-    border:none;
-    box-shadow:0 4px 18px rgba(124,58,237,0.3);
-  }
-  .btn-join:hover{filter:brightness(1.12);box-shadow:0 6px 28px rgba(124,58,237,0.48);}
-
-  /* ── ROOM MODE TOGGLE ── */
-  .room-mode-toggle{
-    display:grid;grid-template-columns:1fr 1fr;
-    background:var(--bg2);border-radius:12px;padding:4px;
-    margin-bottom:22px;gap:4px;
-  }
-  .room-mode-btn{
-    padding:10px;text-align:center;border-radius:9px;cursor:pointer;
-    font-size:0.82rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
-    color:var(--text3);transition:all var(--transition);user-select:none;
-    border:1px solid transparent;
-  }
-  .room-mode-btn.active-host{
-    background:rgba(0,212,255,0.1);color:var(--accent);
-    border-color:rgba(0,212,255,0.3);box-shadow:0 2px 10px rgba(0,212,255,0.1);
-  }
-  .room-mode-btn.active-join{
-    background:rgba(124,58,237,0.12);color:#a78bfa;
-    border-color:rgba(124,58,237,0.3);box-shadow:0 2px 10px rgba(124,58,237,0.1);
-  }
-  .room-mode-btn:hover:not(.active-host):not(.active-join){color:var(--text2);}
-
-  /* ── ROOM CODE DISPLAY ── */
-  .room-code-display{
-    background:var(--bg2);border:1px solid rgba(0,212,255,0.25);
-    border-radius:var(--radius-sm);padding:14px 16px;
-    display:flex;align-items:center;justify-content:space-between;
-    margin-top:8px;
-  }
-  .room-code-value{
-    font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700;
-    letter-spacing:0.2em;color:var(--accent);
-  }
-  .copy-btn{
-    background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);
-    border-radius:6px;padding:5px 12px;cursor:pointer;
-    font-size:0.75rem;font-weight:700;color:var(--accent);
-    letter-spacing:0.05em;text-transform:uppercase;transition:all var(--transition);
-  }
-  .copy-btn:hover{background:rgba(0,212,255,0.2);}
-
-  /* ── JOIN PREVIEW CARD ── */
-  .join-preview{
-    background:linear-gradient(135deg,rgba(124,58,237,0.1),rgba(0,212,255,0.06));
-    border:1px solid rgba(124,58,237,0.3);border-radius:var(--radius-sm);
-    padding:14px 16px;margin-top:10px;
-    display:flex;align-items:center;gap:12px;
-    animation:fadeIn 0.25s ease;
-  }
-  .join-preview-icon{font-size:1.6rem;}
-  .join-preview-name{font-weight:700;font-size:1rem;color:var(--text);}
-  .join-preview-meta{font-size:0.8rem;color:var(--text2);margin-top:2px;}
-
-  /* ── PASSWORD INPUT ── */
-  .pw-input-wrap{position:relative;}
-  .pw-toggle{
-    position:absolute;right:12px;top:50%;transform:translateY(-50%);
-    cursor:pointer;color:var(--text3);font-size:0.9rem;
-    transition:color var(--transition);user-select:none;
-  }
-  .pw-toggle:hover{color:var(--accent);}
-  .pw-input-wrap .form-input{padding-right:40px;font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;}
-
-  /* ── HOST FIELDS PANEL ── */
-  #mg-host-fields{transition:opacity 0.2s;}
-  #mg-join-fields{transition:opacity 0.2s;}
+@media(max-width:480px){.ob-box{padding:32px 22px;}.ob-logo{font-size:2rem;}.main{padding:16px 14px 84px;}.code-val{font-size:.75rem;}}
 </style>
 </head>
 <body>
@@ -685,12 +235,12 @@
 
 <!-- ONBOARDING -->
 <div id="onboarding">
-  <div class="onboard-box">
-    <div class="onboard-logo">PhantoraX</div>
-    <div class="onboard-sub">Smart Bill Splitting</div>
-    <label class="onboard-label">Your Name</label>
-    <input type="text" id="ob-name" class="onboard-input" placeholder="Enter your name..." maxlength="32" autocomplete="off"/>
-    <button class="btn btn-primary btn-full" onclick="startWithName()">Get Started →</button>
+  <div class="ob-box">
+    <div class="ob-logo">PhantoraX</div>
+    <div class="ob-sub">Smart Bill Splitting</div>
+    <label class="ob-label">Your Name</label>
+    <input id="ob-name" class="ob-input" type="text" placeholder="Enter your name..." maxlength="32" autocomplete="off"/>
+    <button class="btn btn-primary btn-full" onclick="startWithName()">Get Started &rarr;</button>
     <div class="divider">or</div>
     <button class="btn btn-secondary btn-full" onclick="startAsGuest()">Continue as Guest</button>
   </div>
@@ -698,177 +248,113 @@
 
 <!-- APP -->
 <div id="app" class="hidden">
-
-  <!-- TOP BAR -->
   <div class="topbar">
     <div class="topbar-logo">PhantoraX</div>
-    <div class="topbar-right">
-      <div class="avatar-btn" id="topbar-avatar" onclick="goView('profile')">?</div>
-    </div>
+    <div class="av" id="topbar-av" onclick="goView('profile')">?</div>
   </div>
 
-  <!-- MAIN -->
-  <div class="main" id="main-content">
+  <div class="main">
 
-    <!-- HOME VIEW -->
+    <!-- HOME -->
     <div class="view active" id="view-home">
       <div style="margin-bottom:20px;">
         <div style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;margin-bottom:4px;">
-          Hey, <span id="home-greeting" style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">User</span> 👋
+          Hey, <span id="home-name" style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">there</span> 👋
         </div>
-        <div style="color:var(--text2);font-size:0.88rem;">Here's your financial overview</div>
+        <div style="color:var(--text2);font-size:.88rem;">Your financial overview</div>
       </div>
-
       <div class="stats-grid" id="home-stats"></div>
-
-      <div class="suggestion-box" id="home-suggestion" style="display:none;"></div>
-
-      <div class="row-between">
-        <div>
-          <div class="sec-title">Recent Activity</div>
-          <div class="sec-sub">Latest expenses across all groups</div>
-        </div>
-      </div>
+      <div class="sug-box" id="home-sug" style="display:none;"></div>
+      <div class="row-bw"><div><div class="sec-title">Recent Activity</div><div class="sec-sub">Latest expenses across all groups</div></div></div>
       <div id="home-recent"></div>
-
       <div class="glow-line"></div>
-      <div class="row-between">
-        <div><div class="sec-title">Quick Actions</div></div>
-      </div>
-      <div class="quick-actions">
-        <div class="qa-btn" onclick="openCreateGroup()">
-          <div class="qa-icon">🔑</div>
-          <div class="qa-label">Host / Join</div>
-        </div>
-        <div class="qa-btn" onclick="goView('add-expense')">
-          <div class="qa-icon">➕</div>
-          <div class="qa-label">Add Expense</div>
-        </div>
-        <div class="qa-btn" onclick="goView('groups')">
-          <div class="qa-icon">📂</div>
-          <div class="qa-label">View Groups</div>
-        </div>
-        <div class="qa-btn" onclick="goView('profile')">
-          <div class="qa-icon">👤</div>
-          <div class="qa-label">My Profile</div>
-        </div>
+      <div class="row-bw"><div><div class="sec-title">Quick Actions</div></div></div>
+      <div class="qa-grid">
+        <div class="qa-btn" onclick="openModal('host')"><div class="qa-ico">🔑</div><div class="qa-lbl">Host Room</div></div>
+        <div class="qa-btn" onclick="openModal('join')"><div class="qa-ico">🚪</div><div class="qa-lbl">Join Room</div></div>
+        <div class="qa-btn" onclick="goView('add-expense')"><div class="qa-ico">➕</div><div class="qa-lbl">Add Expense</div></div>
+        <div class="qa-btn" onclick="goView('profile')"><div class="qa-ico">👤</div><div class="qa-lbl">Profile</div></div>
       </div>
       <div class="credit">Developed By <span>Amlan Dey</span></div>
     </div>
 
-    <!-- GROUPS VIEW -->
+    <!-- GROUPS -->
     <div class="view" id="view-groups">
-      <div class="row-between">
-        <div>
-          <div class="sec-title">My Groups</div>
-          <div class="sec-sub">Manage your expense groups</div>
+      <div class="row-bw">
+        <div><div class="sec-title">My Groups</div><div class="sec-sub">Rooms you host or joined</div></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary btn-sm" onclick="openModal('join')">🚪 Join</button>
+          <button class="btn btn-primary btn-sm" onclick="openModal('host')">🔑 Host</button>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openCreateGroup()">🔑 Host / Join</button>
       </div>
       <div id="groups-list"></div>
     </div>
 
-    <!-- GROUP DETAIL VIEW -->
+    <!-- GROUP DETAIL -->
     <div class="view" id="view-group-detail">
       <div class="back-btn" onclick="goView('groups')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="16" height="16"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        Back to Groups
+        Back
       </div>
-      <div id="group-detail-content"></div>
+      <div id="gd-content"></div>
     </div>
 
-    <!-- ADD EXPENSE VIEW -->
+    <!-- ADD EXPENSE -->
     <div class="view" id="view-add-expense">
       <div class="sec-title">Add Expense</div>
-      <div class="sec-sub">Record a new shared expense</div>
-
-      <div class="form-group">
-        <label class="form-label">Group</label>
-        <select class="form-select" id="ae-group" onchange="onGroupChange()"></select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Description</label>
-        <input type="text" class="form-input" id="ae-desc" placeholder="e.g. Dinner at restaurant" maxlength="60"/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Amount (₹)</label>
-        <div class="input-with-prefix">
-          <span class="input-prefix">₹</span>
-          <input type="number" class="form-input" id="ae-amount" placeholder="0.00" min="0" step="0.01" oninput="updateSplitPreview()"/>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Paid By</label>
-        <select class="form-select" id="ae-paidby"></select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Split Type</label>
+      <div class="sec-sub">Record a shared expense</div>
+      <div class="fg"><label class="fl">Group</label><select class="fs" id="ae-group" onchange="onGroupChange()"></select></div>
+      <div class="fg"><label class="fl">Description</label><input class="fi" id="ae-desc" type="text" placeholder="e.g. Dinner at restaurant" maxlength="60"/></div>
+      <div class="fg"><label class="fl">Amount (&#8377;)</label><div class="pfx-wrap"><span class="pfx">&#8377;</span><input class="fi" id="ae-amount" type="number" placeholder="0.00" min="0" step="0.01" oninput="updateSplitPreview()"/></div></div>
+      <div class="fg"><label class="fl">Paid By</label><select class="fs" id="ae-paidby"></select></div>
+      <div class="fg">
+        <label class="fl">Split Type</label>
         <div class="tab-bar" style="margin-bottom:0;">
           <div class="tab active" onclick="setSplitType('equal',this)">Equal</div>
-          <div class="tab" onclick="setSplitType('custom',this)">Custom ₹</div>
+          <div class="tab" onclick="setSplitType('custom',this)">Custom &#8377;</div>
           <div class="tab" onclick="setSplitType('percentage',this)">Percent %</div>
         </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Split Between</label>
-        <div id="ae-split-members" class="member-chips" style="margin-bottom:12px;"></div>
+      <div class="fg">
+        <label class="fl">Split Between</label>
+        <div id="ae-members" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;"></div>
         <div id="ae-split-inputs" class="split-grid"></div>
-        <div id="ae-split-summary" style="font-size:0.8rem;color:var(--text3);margin-top:8px;font-family:'JetBrains Mono',monospace;"></div>
+        <div id="ae-split-sum" style="font-size:.8rem;color:var(--text3);margin-top:8px;font-family:'JetBrains Mono',monospace;"></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Category</label>
-        <select class="form-select" id="ae-category">
-          <option value="🍔">🍔 Food</option>
-          <option value="🚗">🚗 Transport</option>
-          <option value="🏨">🏨 Hotel</option>
-          <option value="🛒">🛒 Shopping</option>
-          <option value="🎉">🎉 Entertainment</option>
-          <option value="💊">💊 Health</option>
-          <option value="⚡">⚡ Utilities</option>
-          <option value="📦">📦 Other</option>
+      <div class="fg"><label class="fl">Category</label>
+        <select class="fs" id="ae-cat">
+          <option value="&#127828;">&#127828; Food</option><option value="&#128663;">&#128663; Transport</option>
+          <option value="&#127976;">&#127976; Hotel</option><option value="&#128715;">&#128715; Shopping</option>
+          <option value="&#127881;">&#127881; Entertainment</option><option value="&#128138;">&#128138; Health</option>
+          <option value="&#9889;">&#9889; Utilities</option><option value="&#128230;">&#128230; Other</option>
         </select>
       </div>
-      <button class="btn btn-primary btn-full" onclick="saveExpense()">Save Expense</button>
+      <button class="btn btn-primary btn-full" id="ae-save-btn" onclick="saveExpense()">Save Expense</button>
     </div>
 
-    <!-- PROFILE VIEW -->
+    <!-- PROFILE -->
     <div class="view" id="view-profile">
-      <div class="profile-header">
-        <div class="profile-avatar" id="profile-avatar-display" onclick="triggerPhotoUpload()">
-          <img id="profile-photo-preview" src="" alt="" style="display:none;"/>
-          <span id="profile-initials">?</span>
+      <div class="prof-hdr">
+        <div class="prof-av" id="prof-av" onclick="document.getElementById('photo-up').click()">
+          <img id="prof-photo" src="" style="display:none;"/><span id="prof-init">?</span>
         </div>
-        <input type="file" id="photo-upload" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)"/>
-        <div style="font-size:0.7rem;color:var(--text3);margin-bottom:12px;z-index:1;position:relative;">Tap avatar to change photo</div>
-        <div class="profile-name-display" id="profile-name-display">Guest</div>
-        <div class="profile-since" id="profile-since-display"></div>
+        <input type="file" id="photo-up" accept="image/*" style="display:none;" onchange="handlePhoto(event)"/>
+        <div style="font-size:.7rem;color:var(--text3);margin-bottom:10px;z-index:1;position:relative;">Tap to change photo</div>
+        <div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;z-index:1;position:relative;" id="prof-name-disp">Guest</div>
+        <div style="font-size:.8rem;color:var(--text3);z-index:1;position:relative;" id="prof-since"></div>
       </div>
-
       <div class="card">
-        <div class="form-group">
-          <label class="form-label">Your Name</label>
-          <input type="text" class="form-input" id="pf-name" placeholder="Your name" maxlength="32"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">About Me</label>
-          <input type="text" class="form-input" id="pf-about" placeholder="A short bio..." maxlength="80"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Private Notes <span style="font-size:0.7rem;color:var(--text3);">(only you see this)</span></label>
-          <textarea class="form-textarea" id="pf-notes" placeholder="Personal notes, reminders..."></textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Links (up to 5)</label>
-          <div class="links-list" id="pf-links-list"></div>
-        </div>
+        <div class="fg"><label class="fl">Name</label><input class="fi" id="pf-name" type="text" maxlength="32"/></div>
+        <div class="fg"><label class="fl">About Me</label><input class="fi" id="pf-about" type="text" maxlength="80" placeholder="Short bio..."/></div>
+        <div class="fg"><label class="fl">Private Notes</label><textarea class="ft" id="pf-notes" placeholder="Personal reminders..."></textarea></div>
+        <div class="fg"><label class="fl">Links (up to 5)</label><div id="pf-links"></div></div>
         <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Profile</button>
       </div>
-
       <div class="card">
-        <div class="sec-title" style="margin-bottom:12px;">Data Management</div>
+        <div class="sec-title" style="margin-bottom:12px;">Data</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn btn-secondary btn-sm" onclick="exportData()">Export Data</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmClearData()">Clear All Data</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportData()">Export JSON</button>
+          <button class="btn btn-danger btn-sm" onclick="clearData()">Clear Local Data</button>
         </div>
       </div>
       <div class="credit">Developed By <span>Amlan Dey</span></div>
@@ -876,206 +362,236 @@
 
   </div><!-- /main -->
 
-  <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
-    <button class="nav-btn active" data-view="home" onclick="goView('home')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
-      Home
+    <button class="nav-btn active" data-v="home" onclick="goView('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>Home
     </button>
-    <button class="nav-btn" data-view="groups" onclick="goView('groups')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-      Groups
+    <button class="nav-btn" data-v="groups" onclick="goView('groups')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Groups
     </button>
-    <button class="nav-btn" data-view="add-expense" onclick="goView('add-expense')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-      Expense
+    <button class="nav-btn" data-v="add-expense" onclick="goView('add-expense')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Expense
     </button>
-    <button class="nav-btn" data-view="profile" onclick="goView('profile')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      Profile
+    <button class="nav-btn" data-v="profile" onclick="goView('profile')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile
     </button>
   </nav>
 </div><!-- /app -->
 
-<!-- MODAL: Create/Join Group (Room System) -->
-<div class="modal-overlay hidden" id="modal-group">
+<!-- ══ ROOM MODAL ══ -->
+<div class="modal-ov hidden" id="room-modal">
   <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title" id="modal-group-title">Group Room</div>
-      <div class="modal-close" onclick="closeModal('modal-group')">✕</div>
+    <div class="modal-hdr">
+      <div class="modal-title" id="rm-title">Group Room</div>
+      <div class="modal-close" onclick="closeModal()">&#10005;</div>
     </div>
 
-    <!-- MODE TOGGLE -->
-    <div class="room-mode-toggle" id="mg-mode-toggle">
-      <div class="room-mode-btn active-host" id="mg-btn-host" onclick="setRoomMode('host')">
-        🔑 Host a Room
-      </div>
-      <div class="room-mode-btn" id="mg-btn-join" onclick="setRoomMode('join')">
-        🚪 Join a Room
-      </div>
+    <div class="rm-toggle">
+      <div class="rm-tab host-a" id="tab-host" onclick="setMode('host')">&#128273; Host a Room</div>
+      <div class="rm-tab" id="tab-join" onclick="setMode('join')">&#128682; Join a Room</div>
     </div>
 
-    <!-- HOST FIELDS -->
-    <div id="mg-host-fields">
-      <div class="form-group">
-        <label class="form-label">Group Name</label>
-        <input type="text" class="form-input" id="mg-name" placeholder="e.g. Trip to Goa, Roommates..." maxlength="40"/>
+    <!-- HOST PANEL -->
+    <div id="host-panel">
+      <div class="fg">
+        <label class="fl">Group Name</label>
+        <input class="fi" id="h-name" type="text" placeholder="e.g. Trip to Goa, Roommates..." maxlength="40"/>
       </div>
-      <div class="form-group">
-        <label class="form-label">Emoji / Icon</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;" id="emoji-picker">
-          <span class="chip" onclick="selectEmoji('🏖️')">🏖️</span>
-          <span class="chip" onclick="selectEmoji('🏠')">🏠</span>
-          <span class="chip" onclick="selectEmoji('🍕')">🍕</span>
-          <span class="chip" onclick="selectEmoji('✈️')">✈️</span>
-          <span class="chip" onclick="selectEmoji('🎉')">🎉</span>
-          <span class="chip" onclick="selectEmoji('💼')">💼</span>
-          <span class="chip" onclick="selectEmoji('🚗')">🚗</span>
-          <span class="chip" onclick="selectEmoji('🎮')">🎮</span>
-          <span class="chip" onclick="selectEmoji('🏋️')">🏋️</span>
-          <span class="chip" onclick="selectEmoji('🌿')">🌿</span>
+      <div class="fg">
+        <label class="fl">Group Icon</label>
+        <div class="em-row" id="h-em-row">
+          <span class="em-opt sel" data-e="&#127958;" onclick="pickEmoji(this,'h')">&#127958;</span>
+          <span class="em-opt" data-e="&#127968;" onclick="pickEmoji(this,'h')">&#127968;</span>
+          <span class="em-opt" data-e="&#127829;" onclick="pickEmoji(this,'h')">&#127829;</span>
+          <span class="em-opt" data-e="&#9992;" onclick="pickEmoji(this,'h')">&#9992;</span>
+          <span class="em-opt" data-e="&#127881;" onclick="pickEmoji(this,'h')">&#127881;</span>
+          <span class="em-opt" data-e="&#128188;" onclick="pickEmoji(this,'h')">&#128188;</span>
+          <span class="em-opt" data-e="&#128663;" onclick="pickEmoji(this,'h')">&#128663;</span>
+          <span class="em-opt" data-e="&#127918;" onclick="pickEmoji(this,'h')">&#127918;</span>
+          <span class="em-opt" data-e="&#127807;" onclick="pickEmoji(this,'h')">&#127807;</span>
         </div>
-        <input type="text" class="form-input" id="mg-emoji" placeholder="Or type any emoji" maxlength="4" value="🏖️"/>
+        <input class="fi" id="h-em-text" type="text" placeholder="Or type any emoji" maxlength="4" style="margin-top:6px;" value="&#127958;" oninput="onCustomEmoji('h',this)"/>
       </div>
-      <div class="form-group">
-        <label class="form-label">Create Room Password</label>
-        <div class="pw-input-wrap">
-          <input type="password" class="form-input" id="mg-host-pw" placeholder="Set a password for members to join..." maxlength="32" autocomplete="new-password"/>
-          <span class="pw-toggle" onclick="togglePw('mg-host-pw',this)">👁</span>
+      <div class="fg">
+        <label class="fl">Room Password</label>
+        <div class="pw-wrap">
+          <input class="fi" id="h-pw" type="password" placeholder="Choose a password — share it with members..." maxlength="32" autocomplete="new-password"/>
+          <span class="pw-toggle" onclick="togglePw('h-pw',this)">&#128065;</span>
         </div>
-        <div style="font-size:0.75rem;color:var(--text3);margin-top:6px;">
-          Share this password with people you want in your group. They'll enter it to join.
+        <div style="font-size:.75rem;color:var(--text3);margin-top:5px;">Members on any device enter this password to join.</div>
+      </div>
+      <!-- shown after host -->
+      <div id="h-code-box" style="display:none;" class="fg">
+        <div class="code-box">
+          <div class="code-lbl">&#127881; Room created! Share this Room ID with members:</div>
+          <div class="code-val" id="h-code-val">—</div>
+          <div class="code-actions">
+            <div class="copy-btn" onclick="copyCode()">&#128203; Copy Room ID</div>
+            <div class="share-btn" onclick="shareWA()">&#128242; WhatsApp</div>
+          </div>
+          <div style="font-size:.72rem;color:var(--text3);margin-top:8px;">Members: open app &#8594; Join a Room &#8594; paste Room ID &#8594; enter the password you set.</div>
         </div>
       </div>
-      <!-- After hosting, show the room code -->
-      <div id="mg-host-code-display" style="display:none;" class="form-group">
-        <label class="form-label">Room Password (share this!)</label>
-        <div class="room-code-display">
-          <div class="room-code-value" id="mg-host-code-value">—</div>
-          <div class="copy-btn" onclick="copyRoomCode()">Copy</div>
-        </div>
-      </div>
-      <input type="hidden" id="mg-edit-id" value=""/>
-      <button class="btn btn-host btn-full" onclick="hostGroup()" id="mg-host-btn">
-        🔑 &nbsp;HOST GROUP
-      </button>
+      <input type="hidden" id="h-edit-id"/>
+      <button class="btn btn-host btn-full" id="h-btn" onclick="hostGroup()">&#128273;&nbsp; HOST GROUP</button>
     </div>
 
-    <!-- JOIN FIELDS -->
-    <div id="mg-join-fields" style="display:none;">
-      <div style="
-        background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(0,212,255,0.05));
-        border:1px solid rgba(124,58,237,0.2);border-radius:var(--radius-sm);
-        padding:14px 16px;margin-bottom:20px;font-size:0.85rem;color:var(--text2);
-        line-height:1.6;
-      ">
-        Ask the group host for the <strong style="color:#a78bfa;">Room Password</strong>. Enter it below and your name will be added to the group automatically.
+    <!-- JOIN PANEL -->
+    <div id="join-panel" style="display:none;">
+      <div class="info-box">
+        Ask the host to share the <strong style="color:#a78bfa;">Room ID</strong>. Paste it below — the room name and icon will load automatically. Then enter the password to join from any device.
       </div>
-      <div class="form-group">
-        <label class="form-label">Room Password</label>
-        <div class="pw-input-wrap">
-          <input type="password" class="form-input" id="mg-join-pw" placeholder="Enter the room password..." maxlength="32" oninput="liveJoinLookup()" autocomplete="off"/>
-          <span class="pw-toggle" onclick="togglePw('mg-join-pw',this)">👁</span>
+
+      <!-- Step 1: Room ID -->
+      <div class="fg">
+        <label class="fl">Room ID <span style="font-size:.65rem;color:var(--text3);">(paste from host)</span></label>
+        <input class="fi" id="j-code" type="text" placeholder="Paste Room ID here..." oninput="onCodeInput()" autocomplete="off" style="font-family:'JetBrains Mono',monospace;font-size:.85rem;"/>
+        <div class="status-line" id="j-status"></div>
+      </div>
+
+      <!-- Step 2: Preview + editable name/icon (shown after successful lookup) -->
+      <div id="j-preview-area" style="display:none;">
+        <div class="join-preview" id="j-preview-card"></div>
+
+        <div class="fg">
+          <label class="fl">Room Name <span style="font-size:.65rem;color:var(--text3);">(auto-filled &#8901; editable)</span></label>
+          <input class="fi" id="j-name" type="text" maxlength="40"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Room Icon <span style="font-size:.65rem;color:var(--text3);">(auto-filled &#8901; editable)</span></label>
+          <div class="em-row" id="j-em-row">
+            <span class="em-opt" data-e="&#127958;" onclick="pickEmoji(this,'j')">&#127958;</span>
+            <span class="em-opt" data-e="&#127968;" onclick="pickEmoji(this,'j')">&#127968;</span>
+            <span class="em-opt" data-e="&#127829;" onclick="pickEmoji(this,'j')">&#127829;</span>
+            <span class="em-opt" data-e="&#9992;" onclick="pickEmoji(this,'j')">&#9992;</span>
+            <span class="em-opt" data-e="&#127881;" onclick="pickEmoji(this,'j')">&#127881;</span>
+            <span class="em-opt" data-e="&#128188;" onclick="pickEmoji(this,'j')">&#128188;</span>
+            <span class="em-opt" data-e="&#128663;" onclick="pickEmoji(this,'j')">&#128663;</span>
+            <span class="em-opt" data-e="&#127918;" onclick="pickEmoji(this,'j')">&#127918;</span>
+            <span class="em-opt" data-e="&#127807;" onclick="pickEmoji(this,'j')">&#127807;</span>
+          </div>
+          <input class="fi" id="j-em-text" type="text" placeholder="Or type any emoji" maxlength="4" style="margin-top:6px;" oninput="onCustomEmoji('j',this)"/>
+        </div>
+
+        <!-- Step 3: Password -->
+        <div class="fg">
+          <label class="fl">Room Password</label>
+          <div class="pw-wrap">
+            <input class="fi" id="j-pw" type="password" placeholder="Enter the room password..." maxlength="32" autocomplete="off"/>
+            <span class="pw-toggle" onclick="togglePw('j-pw',this)">&#128065;</span>
+          </div>
         </div>
       </div>
-      <!-- Live preview of found group -->
-      <div id="mg-join-preview"></div>
-      <button class="btn btn-join btn-full" onclick="joinGroup()" style="margin-top:8px;">
-        🚪 &nbsp;JOIN GROUP
-      </button>
+
+      <button class="btn btn-join btn-full" id="j-btn" onclick="joinGroup()">&#128682;&nbsp; JOIN GROUP</button>
     </div>
 
   </div>
 </div>
 
-<!-- TOAST -->
 <div id="toast"></div>
 
 <script>
 // ══════════════════════════════════════════════════
-//  STORAGE HELPERS
+// CLOUD — JSONBlob (free, no-auth, CORS-open)
+// Room data lives at: https://jsonblob.com/api/jsonBlob/{id}
 // ══════════════════════════════════════════════════
-function ls(key, def = null) {
-  try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : def; } catch { return def; }
+const API = 'https://jsonblob.com/api/jsonBlob';
+
+async function cloudCreate(payload) {
+  const r = await fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const loc = r.headers.get('Location') || '';
+  const id = loc.split('/').pop();
+  if (!id) throw new Error('No ID in response');
+  return id;
 }
-function lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
-function uid() { return '_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36); }
+
+async function cloudGet(id) {
+  const r = await fetch(API + '/' + id, { headers: { 'Accept': 'application/json' } });
+  if (r.status === 404) throw new Error('NOT_FOUND');
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+async function cloudPut(id, payload) {
+  const r = await fetch(API + '/' + id, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+// ══════════════════════════════════════════════════
+// LOCAL STORAGE
+// ══════════════════════════════════════════════════
+function ls(k, d = null) { try { const v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : d; } catch { return d; } }
+function lsSave(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function fmt(n) { return '₹' + (parseFloat(n) || 0).toFixed(2); }
-function fmtNum(n) { return (parseFloat(n) || 0).toFixed(2); }
+function fmtN(n) { return (parseFloat(n) || 0).toFixed(2); }
+function esc(s) { if (s == null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function ea(s) { if (s == null) return ''; return String(s).replace(/'/g,"\\'"); }
+function cssify(s) { return (s || '').replace(/[^a-zA-Z0-9]/g,'_'); }
 
 // ══════════════════════════════════════════════════
-//  APP STATE
+// BOOT STATE
 // ══════════════════════════════════════════════════
-let currentSplitType = 'equal';
-let selectedSplitMembers = [];
+let splitType = 'equal';
+let splitMembers = [];
 let customSplits = {};
-let editGroupId = null;
-let mgMembers = [];
-let mgSelectedEmoji = '🏖️';
-let currentDetailGroupId = null;
+let curDetailId = null;
+let hEmoji = '🏖️';
+let jEmoji = '🏖️';
+let rmMode = 'host';
+let jFoundData = null; // cached cloud data from lookup
 
-// ══════════════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════════════
 function init() {
-  const user = ls('px_user');
-  if (user && user.name) {
-    showApp();
-  } else {
-    showOnboarding();
-  }
+  const u = ls('px_user');
+  if (u && u.name) showApp(); else showOnboarding();
 }
 
 function showOnboarding() {
   document.getElementById('onboarding').classList.remove('hidden');
   document.getElementById('app').classList.add('hidden');
 }
-
 function showApp() {
-  const ob = document.getElementById('onboarding');
-  ob.classList.add('hidden');
+  document.getElementById('onboarding').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
-  renderTopbarAvatar();
+  renderAv();
   goView('home');
 }
-
 function startWithName() {
-  const name = (document.getElementById('ob-name').value || '').trim();
-  if (!name) { showToast('Please enter your name', 'error'); return; }
-  const user = ls('px_user') || {};
-  user.name = name;
-  user.joinedAt = user.joinedAt || new Date().toISOString();
-  user.links = user.links || ['','','','',''];
-  lsSet('px_user', user);
-  showApp();
+  const n = (document.getElementById('ob-name').value || '').trim();
+  if (!n) { toast('Please enter your name', 'er'); return; }
+  const u = ls('px_user') || {};
+  u.name = n; u.joinedAt = u.joinedAt || new Date().toISOString();
+  u.links = u.links || ['', '', '', '', ''];
+  lsSave('px_user', u); showApp();
 }
-
 function startAsGuest() {
-  const user = { name: 'Guest', joinedAt: new Date().toISOString(), links: ['','','','',''] };
-  lsSet('px_user', user);
+  lsSave('px_user', { name: 'Guest', joinedAt: new Date().toISOString(), links: ['', '', '', '', ''] });
   showApp();
 }
-
 document.getElementById('ob-name').addEventListener('keydown', e => { if (e.key === 'Enter') startWithName(); });
 
 // ══════════════════════════════════════════════════
-//  NAVIGATION
+// NAV
 // ══════════════════════════════════════════════════
-const views = ['home','groups','group-detail','add-expense','profile'];
 function goView(name) {
-  views.forEach(v => {
-    const el = document.getElementById('view-' + v);
-    if (el) el.classList.remove('active');
+  ['home','groups','group-detail','add-expense','profile'].forEach(v => {
+    const el = document.getElementById('view-' + v); if (el) el.classList.remove('active');
   });
-  const target = document.getElementById('view-' + name);
-  if (target) target.classList.add('active');
-
+  const t = document.getElementById('view-' + name); if (t) t.classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const navMatch = document.querySelector(`.nav-btn[data-view="${name}"]`);
-  if (navMatch) navMatch.classList.add('active');
-
+  const nb = document.querySelector('.nav-btn[data-v="' + name + '"]'); if (nb) nb.classList.add('active');
   window.scrollTo(0, 0);
-
   if (name === 'home') renderHome();
   if (name === 'groups') renderGroups();
   if (name === 'profile') renderProfile();
@@ -1083,880 +599,721 @@ function goView(name) {
 }
 
 // ══════════════════════════════════════════════════
-//  TOAST
+// TOAST
 // ══════════════════════════════════════════════════
-let toastTimer = null;
-function showToast(msg, type = '') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'show' + (type ? ' ' + type : '');
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.className = ''; }, 2800);
+let toastT = null;
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.className = '', 3200);
 }
 
 // ══════════════════════════════════════════════════
-//  TOP BAR AVATAR
+// AVATAR
 // ══════════════════════════════════════════════════
-function renderTopbarAvatar() {
-  const user = ls('px_user') || {};
-  const btn = document.getElementById('topbar-avatar');
-  if (user.photo) {
-    btn.innerHTML = `<img src="${user.photo}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`;
-  } else {
-    btn.innerHTML = (user.name || 'G').charAt(0).toUpperCase();
-  }
+function renderAv() {
+  const u = ls('px_user') || {};
+  const el = document.getElementById('topbar-av');
+  if (u.photo) el.innerHTML = '<img src="' + u.photo + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>';
+  else el.textContent = (u.name || 'G').charAt(0).toUpperCase();
 }
 
 // ══════════════════════════════════════════════════
-//  HOME VIEW
+// HOME
 // ══════════════════════════════════════════════════
 function renderHome() {
-  const user = ls('px_user') || {};
-  document.getElementById('home-greeting').textContent = (user.name || 'Guest').split(' ')[0];
-
+  const u = ls('px_user') || {};
+  document.getElementById('home-name').textContent = (u.name || 'Guest').split(' ')[0];
   const groups = ls('px_groups') || [];
-  const allExpenses = ls('px_expenses') || [];
+  const exps = ls('px_expenses') || [];
+  const { owed, owe } = myBalances(exps, u.name || 'Guest');
 
-  // Compute balances
-  const { totalOwed, totalOwe } = computeMyBalances(groups, allExpenses, user.name || 'Guest');
-  const totalExpenses = allExpenses.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  document.getElementById('home-stats').innerHTML =
+    '<div class="stat-card"><div class="stat-label">Groups</div><div class="stat-val blue">' + groups.length + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">Expenses</div><div class="stat-val purple">' + exps.length + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">You Owe</div><div class="stat-val red">' + fmt(owe) + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">Owed to You</div><div class="stat-val green">' + fmt(owed) + '</div></div>';
 
-  document.getElementById('home-stats').innerHTML = `
-    <div class="stat-card">
-      <div class="stat-label">Total Groups</div>
-      <div class="stat-value blue">${groups.length}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Total Expenses</div>
-      <div class="stat-value purple">${allExpenses.length}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">You Owe</div>
-      <div class="stat-value red">${fmt(totalOwe)}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">You're Owed</div>
-      <div class="stat-value green">${fmt(totalOwed)}</div>
-    </div>
-  `;
+  const sug = suggestion(groups, exps, u.name || 'Guest');
+  const sb = document.getElementById('home-sug');
+  if (sug) { sb.style.display = ''; sb.innerHTML = '<div class="sug-title">⚡ Smart Suggestion</div><div>' + sug + '</div>'; }
+  else sb.style.display = 'none';
 
-  // Suggestion
-  const sugBox = document.getElementById('home-suggestion');
-  const suggestion = getPayNextSuggestion(groups, allExpenses, user.name || 'Guest');
-  if (suggestion) {
-    sugBox.style.display = '';
-    sugBox.innerHTML = `
-      <div class="suggestion-title">⚡ AI Suggestion</div>
-      <div class="suggestion-text">${suggestion}</div>
-    `;
-  } else {
-    sugBox.style.display = 'none';
-  }
-
-  // Recent
-  const recent = [...allExpenses].reverse().slice(0, 5);
-  const recentEl = document.getElementById('home-recent');
-  if (!recent.length) {
-    recentEl.innerHTML = `<div class="empty"><div class="empty-icon">💸</div><div class="empty-title">No expenses yet</div><div class="empty-sub">Add your first expense to get started</div></div>`;
-    return;
-  }
-  recentEl.innerHTML = recent.map(e => {
-    const grp = groups.find(g => g.id === e.groupId);
-    return `
-      <div class="expense-item">
-        <div class="expense-icon-wrap">${e.category || '📦'}</div>
-        <div class="expense-info">
-          <div class="expense-desc">${escHtml(e.description || 'Expense')}</div>
-          <div class="expense-meta">Paid by <strong>${escHtml(e.paidBy)}</strong> · ${escHtml(grp ? grp.name : 'Unknown')}</div>
-        </div>
-        <div class="expense-amount">${fmt(e.amount)}</div>
-      </div>`;
+  const recent = [...exps].reverse().slice(0, 5);
+  const re = document.getElementById('home-recent');
+  if (!recent.length) { re.innerHTML = '<div class="empty"><div class="empty-ico">💸</div><div class="empty-t">No expenses yet</div><div>Host or join a room to start splitting</div></div>'; return; }
+  re.innerHTML = recent.map(e => {
+    const g = groups.find(x => x.id === e.groupId);
+    return '<div class="exp-item"><div class="exp-ico">' + (e.cat || '📦') + '</div><div style="flex:1;min-width:0;"><div style="font-weight:600;">' + esc(e.desc || 'Expense') + '</div><div style="font-size:.78rem;color:var(--text2);">Paid by ' + esc(e.paidBy) + ' &middot; ' + esc(g ? g.name : 'Unknown') + '</div></div><div style="font-family:\'JetBrains Mono\',monospace;font-weight:700;white-space:nowrap;">' + fmt(e.amount) + '</div></div>';
   }).join('');
 }
 
-function computeMyBalances(groups, allExpenses, myName) {
-  let totalOwed = 0, totalOwe = 0;
-  allExpenses.forEach(exp => {
-    const splits = exp.splits || {};
-    const amt = parseFloat(exp.amount) || 0;
-    if (exp.paidBy === myName) {
-      Object.entries(splits).forEach(([member, share]) => {
-        if (member !== myName) totalOwed += parseFloat(share) || 0;
-      });
-    } else if (splits[myName]) {
-      totalOwe += parseFloat(splits[myName]) || 0;
-    }
+function myBalances(exps, me) {
+  let owed = 0, owe = 0;
+  exps.forEach(e => {
+    const sp = e.splits || {};
+    if (e.paidBy === me) { Object.entries(sp).forEach(([m, s]) => { if (m !== me) owed += parseFloat(s) || 0; }); }
+    else if (sp[me]) owe += parseFloat(sp[me]) || 0;
   });
-  return { totalOwed, totalOwe };
+  return { owed, owe };
 }
 
-function getPayNextSuggestion(groups, allExpenses, myName) {
+function suggestion(groups, exps, me) {
   if (!groups.length) return null;
-  // Find who has paid the least recently
-  const paidCounts = {};
-  allExpenses.forEach(e => {
-    paidCounts[e.paidBy] = (paidCounts[e.paidBy] || 0) + 1;
-  });
-  let suggestion = null;
-  // Check if you owe someone
-  const debts = computeDebts(allExpenses);
-  const myDebts = debts.filter(d => d.from === myName);
-  if (myDebts.length) {
-    const max = myDebts.reduce((a,b) => a.amount > b.amount ? a : b);
-    suggestion = `You should pay <strong>${escHtml(max.to)}</strong> ${fmt(max.amount)} to settle your largest debt.`;
-  } else {
-    // Suggest who should pay next in most active group
-    const activeGroup = groups.reduce((a,b) => (b.members||[]).length > (a.members||[]).length ? b : a, groups[0]);
-    if (activeGroup) {
-      const members = activeGroup.members || [];
-      const groupExpenses = allExpenses.filter(e => e.groupId === activeGroup.id);
-      const paidMap = {};
-      members.forEach(m => paidMap[m] = 0);
-      groupExpenses.forEach(e => { if (paidMap[e.paidBy] !== undefined) paidMap[e.paidBy]++; });
-      const least = members.reduce((a,b) => (paidMap[a]||0) <= (paidMap[b]||0) ? a : b, members[0]);
-      if (least) suggestion = `<strong>${escHtml(least)}</strong> should pay next in <strong>${escHtml(activeGroup.name)}</strong> — they've paid the least.`;
-    }
+  const debts = calcDebts(exps);
+  const mine = debts.filter(d => d.from === me);
+  if (mine.length) {
+    const top = mine.reduce((a, b) => a.amount > b.amount ? a : b);
+    return 'You should pay <strong>' + esc(top.to) + '</strong> ' + fmt(top.amount) + ' to settle your largest debt.';
   }
-  return suggestion;
+  const ag = groups.reduce((a, b) => (b.members || []).length > (a.members || []).length ? b : a, groups[0]);
+  if (ag) {
+    const mem = ag.members || [];
+    const gex = exps.filter(e => e.groupId === ag.id);
+    const pc = {}; mem.forEach(m => pc[m] = 0); gex.forEach(e => { if (pc[e.paidBy] !== undefined) pc[e.paidBy]++; });
+    const least = mem.reduce((a, b) => (pc[a] || 0) <= (pc[b] || 0) ? a : b, mem[0]);
+    if (least) return '<strong>' + esc(least) + '</strong> should pay next in <strong>' + esc(ag.name) + '</strong> — they\'ve paid the least.';
+  }
+  return null;
 }
 
 // ══════════════════════════════════════════════════
-//  GROUPS VIEW
+// GROUPS LIST
 // ══════════════════════════════════════════════════
 function renderGroups() {
   const groups = ls('px_groups') || [];
-  const allExpenses = ls('px_expenses') || [];
+  const exps = ls('px_expenses') || [];
+  const u = ls('px_user') || {}; const me = u.name || 'Guest';
   const el = document.getElementById('groups-list');
   if (!groups.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">🏘️</div><div class="empty-title">No groups yet</div><div class="empty-sub">Create a group to start splitting bills</div></div>`;
-    return;
+    el.innerHTML = '<div class="empty"><div class="empty-ico">🏘️</div><div class="empty-t">No rooms yet</div><div>Host a room or join one with a Room ID</div></div>'; return;
   }
   el.innerHTML = groups.map(g => {
-    const exps = allExpenses.filter(e => e.groupId === g.id);
-    const total = exps.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
-    const members = (g.members || []).length;
-    const user = ls('px_user') || {};
-    const myName = user.name || 'Guest';
-    const isHost = g.hostName === myName;
-    return `
-      <div class="group-card" onclick="openGroupDetail('${g.id}')">
-        <div class="group-icon">${g.emoji || '🏘️'}</div>
-        <div class="group-info">
-          <div class="group-name">${escHtml(g.name)}</div>
-          <div class="group-meta">${members} member${members!==1?'s':''} · ${exps.length} expense${exps.length!==1?'s':''}</div>
-          <div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap;">
-            ${isHost ? '<span class="badge badge-blue">🔑 Host</span>' : '<span class="badge badge-purple">🚪 Member</span>'}
-            ${g.roomCode ? `<span class="badge badge-yellow" style="font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;">pw: ${escHtml(g.roomCode)}</span>` : ''}
-          </div>
-        </div>
-        <div>
-          <div class="group-balance">${fmt(total)}</div>
-        </div>
-      </div>`;
+    const gx = exps.filter(e => e.groupId === g.id);
+    const total = gx.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+    const mc = (g.members || []).length;
+    const isHost = g.hostName === me;
+    const isCloud = !!g.blobId;
+    return '<div class="g-card" onclick="openDetail(\'' + g.id + '\')">' +
+      '<div class="g-icon">' + (g.emoji || '🏘️') + '</div>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-weight:700;font-size:1rem;margin-bottom:3px;">' + esc(g.name) + '</div>' +
+        '<div style="font-size:.8rem;color:var(--text2);">' + mc + ' member' + (mc !== 1 ? 's' : '') + ' &middot; ' + gx.length + ' expense' + (gx.length !== 1 ? 's' : '') + '</div>' +
+        '<div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap;">' +
+          (isHost ? '<span class="badge b-blue">🔑 Host</span>' : '<span class="badge b-purple">🚪 Member</span>') +
+          (isCloud ? '<span class="badge b-teal">☁ Cloud</span>' : '<span class="badge b-yellow">📱 Local</span>') +
+        '</div>' +
+      '</div>' +
+      '<div style="text-align:right;flex-shrink:0;"><div style="font-family:\'JetBrains Mono\',monospace;font-weight:700;">' + fmt(total) + '</div></div>' +
+      '</div>';
   }).join('');
 }
 
-function openGroupDetail(id) {
-  currentDetailGroupId = id;
-  renderGroupDetail(id);
-  goView('group-detail');
-}
+// ══════════════════════════════════════════════════
+// GROUP DETAIL
+// ══════════════════════════════════════════════════
+function openDetail(id) { curDetailId = id; renderDetail(id); goView('group-detail'); }
 
-function renderGroupDetail(id) {
+function renderDetail(id) {
   const groups = ls('px_groups') || [];
-  const allExpenses = ls('px_expenses') || [];
-  const g = groups.find(g => g.id === id);
-  if (!g) return;
-  const exps = allExpenses.filter(e => e.groupId === id);
-  const debts = computeDebts(exps);
-  const user = ls('px_user') || {};
-  const myName = user.name || 'Guest';
+  const exps = ls('px_expenses') || [];
+  const g = groups.find(x => x.id === id); if (!g) return;
+  const u = ls('px_user') || {}; const me = u.name || 'Guest';
+  const gx = exps.filter(e => e.groupId === id);
+  const debts = calcDebts(gx);
+  const total = gx.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const mem = g.members || [];
+  const isHost = g.hostName === me;
+  const isCloud = !!g.blobId;
 
-  const total = exps.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
-  const members = g.members || [];
-
-  // Member balances
-  const balances = {};
-  members.forEach(m => balances[m] = 0);
-  exps.forEach(exp => {
-    const splits = exp.splits || {};
-    const paid = parseFloat(exp.amount) || 0;
-    if (balances[exp.paidBy] !== undefined) balances[exp.paidBy] += paid;
-    Object.entries(splits).forEach(([m, share]) => {
-      if (balances[m] !== undefined) balances[m] -= parseFloat(share) || 0;
-    });
+  const bals = {}; mem.forEach(m => bals[m] = 0);
+  gx.forEach(e => {
+    if (bals[e.paidBy] !== undefined) bals[e.paidBy] += parseFloat(e.amount) || 0;
+    Object.entries(e.splits || {}).forEach(([m, s]) => { if (bals[m] !== undefined) bals[m] -= parseFloat(s) || 0; });
   });
 
-  const suggestion = exps.length ? getPayNextSuggestion([g], exps, myName) : null;
+  const sug = gx.length ? suggestion([g], gx, me) : null;
 
-  document.getElementById('group-detail-content').innerHTML = `
-    <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:20px;">
-      <div style="font-size:2rem;padding-top:2px;">${g.emoji || '🏘️'}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;">${escHtml(g.name)}</div>
-        <div style="color:var(--text2);font-size:0.82rem;margin-top:2px;">${members.length} members · ${exps.length} expenses · ${fmt(total)} total</div>
-        ${g.roomCode ? `
-        <div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <span style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-weight:700;">Room Password:</span>
-          <div class="room-code-display" style="padding:6px 12px;display:inline-flex;gap:10px;align-items:center;">
-            <span class="room-code-value" style="font-size:0.95rem;">${escHtml(g.roomCode)}</span>
-            <span class="copy-btn" style="padding:3px 8px;font-size:0.68rem;" onclick="event.stopPropagation();navigator.clipboard.writeText('${escAttr(g.roomCode)}').then(()=>showToast('Copied!','success'))">Copy</span>
-          </div>
-        </div>` : ''}
-        <div style="margin-top:8px;">
-          <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-weight:700;margin-bottom:5px;">Members</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;">
-            ${members.map(m => {
-              const isHost2 = g.hostName === m;
-              return `<span class="chip ${isHost2 ? 'selected' : ''}" style="cursor:default;">${escHtml(m)}${isHost2 ? ' <span style="font-size:0.6rem;color:var(--accent);">★Host</span>' : ''}</span>`;
-            }).join('')}
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
-        <button class="btn btn-secondary btn-sm" onclick="editGroup('${id}')">Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteGroup('${id}')">Delete</button>
-      </div>
-    </div>
-
-    ${suggestion ? `<div class="suggestion-box"><div class="suggestion-title">⚡ Suggestion</div><div class="suggestion-text">${suggestion}</div></div>` : ''}
-
-    <div class="tab-bar" id="gd-tabs">
-      <div class="tab active" onclick="switchGDTab('expenses',this)">Expenses</div>
-      <div class="tab" onclick="switchGDTab('balances',this)">Balances</div>
-      <div class="tab" onclick="switchGDTab('settle',this)">Settle Up</div>
-    </div>
-
-    <div id="gd-tab-expenses">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
-        <button class="btn btn-primary btn-sm" onclick="goToAddExpenseForGroup('${id}')">+ Add Expense</button>
-      </div>
-      ${exps.length ? [...exps].reverse().map(e => `
-        <div class="expense-item">
-          <div class="expense-icon-wrap">${e.category||'📦'}</div>
-          <div class="expense-info">
-            <div class="expense-desc">${escHtml(e.description||'Expense')}</div>
-            <div class="expense-meta">Paid by <strong>${escHtml(e.paidBy)}</strong> · ${Object.keys(e.splits||{}).length} people</div>
-          </div>
-          <div style="text-align:right;">
-            <div class="expense-amount">${fmt(e.amount)}</div>
-            <div style="margin-top:4px;cursor:pointer;" onclick="deleteExpense('${e.id}','${id}')"><span class="badge badge-red" style="font-size:0.6rem;">✕</span></div>
-          </div>
-        </div>`).join('') : `<div class="empty"><div class="empty-icon">💸</div><div class="empty-title">No expenses</div><div class="empty-sub">Add the first expense for this group</div></div>`}
-    </div>
-
-    <div id="gd-tab-balances" style="display:none;">
-      ${members.map(m => {
-        const bal = balances[m] || 0;
-        const isPos = bal >= 0;
-        return `
-          <div class="expense-item">
-            <div class="expense-icon-wrap" style="font-size:0.9rem;font-weight:700;">${m.charAt(0).toUpperCase()}</div>
-            <div class="expense-info">
-              <div class="expense-desc">${escHtml(m)}</div>
-              <div class="expense-meta">${isPos ? 'Gets back' : 'Owes'} ${fmt(Math.abs(bal))}</div>
-            </div>
-            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${isPos ? 'var(--accent3)' : 'var(--danger)'};">
-              ${isPos ? '+' : ''}${fmt(bal)}
-            </div>
-          </div>`;
-      }).join('')}
-    </div>
-
-    <div id="gd-tab-settle" style="display:none;">
-      ${debts.length ? debts.map(d => `
-        <div class="debt-row">
-          <div class="debt-from">${escHtml(d.from)}</div>
-          <div class="debt-arrow">→ owes →</div>
-          <div class="debt-to">${escHtml(d.to)}</div>
-          <div class="debt-amount">${fmt(d.amount)}</div>
-        </div>`).join('') : `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">All settled!</div><div class="empty-sub">No outstanding debts in this group</div></div>`}
-    </div>
-  `;
+  document.getElementById('gd-content').innerHTML =
+    '<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:20px;">' +
+      '<div style="font-size:2rem;padding-top:2px;">' + (g.emoji || '🏘️') + '</div>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-family:\'Orbitron\',monospace;font-size:1.1rem;font-weight:700;">' + esc(g.name) + '</div>' +
+        '<div style="color:var(--text2);font-size:.82rem;margin-top:2px;">' + mem.length + ' members &middot; ' + gx.length + ' expenses &middot; ' + fmt(total) + '</div>' +
+        (isCloud ? '<div style="margin-top:10px;"><div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-weight:700;margin-bottom:6px;">Room ID (share to invite)</div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><div style="background:var(--bg2);border:1px solid rgba(0,212,255,.25);border-radius:8px;padding:7px 12px;font-family:\'JetBrains Mono\',monospace;font-size:.78rem;color:var(--accent);word-break:break-all;flex:1;">' + esc(g.blobId) + '</div><div class="copy-btn" onclick="navigator.clipboard.writeText(\'' + ea(g.blobId) + '\').then(()=>toast(\'Room ID copied!\',\'ok\'))">Copy</div></div></div>' : '') +
+        '<div style="margin-top:12px;"><div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-weight:700;margin-bottom:6px;">Members</div><div style="display:flex;flex-wrap:wrap;gap:6px;">' +
+          mem.map(m => '<span class="chip' + (m === me ? ' sel' : '') + '" style="cursor:default;">' + esc(m) + (m === g.hostName ? ' <span style="font-size:.6rem;color:var(--accent);">★</span>' : '') + '</span>').join('') +
+        '</div></div>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">' +
+        (isCloud ? '<button class="btn btn-secondary btn-sm" onclick="syncGroup(\'' + id + '\')" id="sync-' + cssify(id) + '">☁ Sync</button>' : '') +
+        (isHost ? '<button class="btn btn-secondary btn-sm" onclick="editGroup(\'' + id + '\')">Edit</button>' : '') +
+        '<button class="btn btn-danger btn-sm" onclick="leaveGroup(\'' + id + '\')">Leave</button>' +
+      '</div>' +
+    '</div>' +
+    (sug ? '<div class="sug-box"><div class="sug-title">⚡ Suggestion</div><div>' + sug + '</div></div>' : '') +
+    '<div class="tab-bar" id="gd-tabs">' +
+      '<div class="tab active" onclick="gdTab(\'expenses\',this)">Expenses</div>' +
+      '<div class="tab" onclick="gdTab(\'balances\',this)">Balances</div>' +
+      '<div class="tab" onclick="gdTab(\'settle\',this)">Settle Up</div>' +
+    '</div>' +
+    '<div id="gdt-expenses">' +
+      '<div style="display:flex;justify-content:flex-end;margin-bottom:12px;"><button class="btn btn-primary btn-sm" onclick="gotoAddExp(\'' + id + '\')">+ Add Expense</button></div>' +
+      (gx.length ? [...gx].reverse().map(e =>
+        '<div class="exp-item"><div class="exp-ico">' + (e.cat || '📦') + '</div>' +
+        '<div style="flex:1;min-width:0;"><div style="font-weight:600;">' + esc(e.desc || 'Expense') + '</div><div style="font-size:.78rem;color:var(--text2);">Paid by <strong>' + esc(e.paidBy) + '</strong> &middot; ' + Object.keys(e.splits || {}).length + ' people</div></div>' +
+        '<div style="text-align:right;"><div style="font-family:\'JetBrains Mono\',monospace;font-weight:700;">' + fmt(e.amount) + '</div><div style="margin-top:4px;cursor:pointer;" onclick="delExp(\'' + e.id + '\',\'' + id + '\')"><span class="badge b-red" style="font-size:.6rem;">✕ del</span></div></div></div>'
+      ).join('') : '<div class="empty"><div class="empty-ico">💸</div><div class="empty-t">No expenses</div></div>') +
+    '</div>' +
+    '<div id="gdt-balances" style="display:none;">' +
+      mem.map(m => {
+        const b = bals[m] || 0; const pos = b >= 0;
+        return '<div class="exp-item"><div class="exp-ico" style="font-size:.85rem;font-weight:700;">' + m.charAt(0).toUpperCase() + '</div><div style="flex:1;"><div style="font-weight:600;">' + esc(m) + '</div><div style="font-size:.78rem;color:var(--text2);">' + (pos ? 'Gets back' : 'Owes') + ' ' + fmt(Math.abs(b)) + '</div></div><div style="font-family:\'JetBrains Mono\',monospace;font-weight:700;color:' + (pos ? 'var(--accent3)' : 'var(--danger)') + ';">' + (pos ? '+' : '') + fmt(b) + '</div></div>';
+      }).join('') +
+    '</div>' +
+    '<div id="gdt-settle" style="display:none;">' +
+      (debts.length ? debts.map(d =>
+        '<div class="debt-row"><div style="font-weight:600;color:var(--danger);">' + esc(d.from) + '</div><div style="color:var(--text3);font-size:.8rem;">&rarr; owes &rarr;</div><div style="font-weight:600;color:var(--accent3);">' + esc(d.to) + '</div><div style="margin-left:auto;font-family:\'JetBrains Mono\',monospace;font-weight:700;color:var(--warn);">' + fmt(d.amount) + '</div></div>'
+      ).join('') : '<div class="empty"><div class="empty-ico">✅</div><div class="empty-t">All settled!</div></div>') +
+    '</div>';
 }
 
-function switchGDTab(name, el) {
-  ['expenses','balances','settle'].forEach(t => {
-    const tab = document.getElementById('gd-tab-' + t);
-    if (tab) tab.style.display = 'none';
-  });
-  const target = document.getElementById('gd-tab-' + name);
-  if (target) target.style.display = '';
+function gdTab(name, el) {
+  ['expenses','balances','settle'].forEach(t => { const e = document.getElementById('gdt-' + t); if (e) e.style.display = 'none'; });
+  const tg = document.getElementById('gdt-' + name); if (tg) tg.style.display = '';
   document.querySelectorAll('#gd-tabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
 }
 
-function computeDebts(expenses) {
-  // Net balances per person
+function calcDebts(exps) {
   const net = {};
-  expenses.forEach(exp => {
-    const paid = parseFloat(exp.amount) || 0;
-    net[exp.paidBy] = (net[exp.paidBy] || 0) + paid;
-    Object.entries(exp.splits || {}).forEach(([m, share]) => {
-      net[m] = (net[m] || 0) - (parseFloat(share) || 0);
-    });
+  exps.forEach(e => {
+    net[e.paidBy] = (net[e.paidBy] || 0) + (parseFloat(e.amount) || 0);
+    Object.entries(e.splits || {}).forEach(([m, s]) => { net[m] = (net[m] || 0) - (parseFloat(s) || 0); });
   });
-
-  const creditors = [], debtors = [];
-  Object.entries(net).forEach(([person, bal]) => {
-    if (bal > 0.01) creditors.push({ person, amount: bal });
-    else if (bal < -0.01) debtors.push({ person, amount: -bal });
-  });
-  creditors.sort((a,b) => b.amount - a.amount);
-  debtors.sort((a,b) => b.amount - a.amount);
-
-  const transactions = [];
-  let i = 0, j = 0;
-  while (i < debtors.length && j < creditors.length) {
-    const amt = Math.min(debtors[i].amount, creditors[j].amount);
-    if (amt > 0.01) transactions.push({ from: debtors[i].person, to: creditors[j].person, amount: amt });
-    debtors[i].amount -= amt;
-    creditors[j].amount -= amt;
-    if (debtors[i].amount < 0.01) i++;
-    if (creditors[j].amount < 0.01) j++;
+  const cred = [], deb = [];
+  Object.entries(net).forEach(([p, b]) => { if (b > 0.01) cred.push({ person: p, amount: b }); else if (b < -0.01) deb.push({ person: p, amount: -b }); });
+  cred.sort((a, b) => b.amount - a.amount); deb.sort((a, b) => b.amount - a.amount);
+  const tx = []; let i = 0, j = 0;
+  while (i < deb.length && j < cred.length) {
+    const a = Math.min(deb[i].amount, cred[j].amount);
+    if (a > 0.01) tx.push({ from: deb[i].person, to: cred[j].person, amount: a });
+    deb[i].amount -= a; cred[j].amount -= a;
+    if (deb[i].amount < 0.01) i++; if (cred[j].amount < 0.01) j++;
   }
-  return transactions;
+  return tx;
 }
 
-function goToAddExpenseForGroup(id) {
-  goView('add-expense');
-  setTimeout(() => {
-    const sel = document.getElementById('ae-group');
-    if (sel) { sel.value = id; onGroupChange(); }
-  }, 100);
+function gotoAddExp(id) { goView('add-expense'); setTimeout(() => { const s = document.getElementById('ae-group'); if (s) { s.value = id; onGroupChange(); } }, 100); }
+
+// ══════════════════════════════════════════════════
+// SYNC FROM CLOUD
+// ══════════════════════════════════════════════════
+async function syncGroup(id) {
+  const groups = ls('px_groups') || [];
+  const g = groups.find(x => x.id === id);
+  if (!g || !g.blobId) { toast('No cloud link for this group', 'er'); return; }
+  const btn = document.getElementById('sync-' + cssify(id));
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Syncing...'; }
+  try {
+    const cloud = await cloudGet(g.blobId);
+    g.members = cloud.members || g.members;
+    g.name = cloud.name || g.name;
+    g.emoji = cloud.emoji || g.emoji;
+    let allExp = ls('px_expenses') || [];
+    allExp = allExp.filter(e => e.groupId !== id);
+    const cexp = (cloud.expenses || []).map(e => ({ ...e, groupId: id }));
+    allExp = [...allExp, ...cexp];
+    lsSave('px_groups', groups.map(x => x.id === id ? g : x));
+    lsSave('px_expenses', allExp);
+    toast('Synced! ☁', 'ok');
+    renderDetail(id); renderHome();
+  } catch (e) {
+    toast('Sync failed: ' + e.message, 'er');
+    if (btn) { btn.disabled = false; btn.innerHTML = '☁ Sync'; }
+  }
 }
 
 // ══════════════════════════════════════════════════
-//  ROOM MODE TOGGLE
+// ROOM MODAL
 // ══════════════════════════════════════════════════
-let currentRoomMode = 'host'; // 'host' | 'join'
+function openModal(mode) {
+  // Reset host
+  document.getElementById('h-name').value = '';
+  document.getElementById('h-em-text').value = '🏖️';
+  document.getElementById('h-pw').value = '';
+  document.getElementById('h-pw').type = 'password';
+  document.getElementById('h-pw').disabled = false;
+  document.getElementById('h-name').disabled = false;
+  document.getElementById('h-em-text').disabled = false;
+  document.getElementById('h-code-box').style.display = 'none';
+  document.getElementById('h-btn').style.display = '';
+  document.getElementById('h-btn').textContent = '🔑  HOST GROUP';
+  document.getElementById('h-btn').disabled = false;
+  document.getElementById('h-edit-id').value = '';
+  hEmoji = '🏖️';
+  document.querySelectorAll('#h-em-row .em-opt').forEach(e => e.classList.toggle('sel', e.dataset.e === '🏖️'));
 
-function setRoomMode(mode) {
-  currentRoomMode = mode;
-  const hostBtn = document.getElementById('mg-btn-host');
-  const joinBtn = document.getElementById('mg-btn-join');
-  const hostFields = document.getElementById('mg-host-fields');
-  const joinFields = document.getElementById('mg-join-fields');
+  // Reset join
+  document.getElementById('j-code').value = '';
+  document.getElementById('j-status').textContent = '';
+  document.getElementById('j-preview-area').style.display = 'none';
+  document.getElementById('j-btn').disabled = false;
+  document.getElementById('j-btn').textContent = '🚪  JOIN GROUP';
+  jFoundData = null;
+  jEmoji = '🏖️';
+  if (document.getElementById('j-pw')) { document.getElementById('j-pw').value = ''; document.getElementById('j-pw').type = 'password'; }
 
-  if (mode === 'host') {
-    hostBtn.className = 'room-mode-btn active-host';
-    joinBtn.className = 'room-mode-btn';
-    hostFields.style.display = '';
-    joinFields.style.display = 'none';
-    document.getElementById('modal-group-title').textContent = 'Host a Room';
-  } else {
-    joinBtn.className = 'room-mode-btn active-join';
-    hostBtn.className = 'room-mode-btn';
-    hostFields.style.display = 'none';
-    joinFields.style.display = '';
-    document.getElementById('modal-group-title').textContent = 'Join a Room';
-    document.getElementById('mg-join-pw').value = '';
-    document.getElementById('mg-join-preview').innerHTML = '';
-  }
+  document.getElementById('tab-join').style.display = '';
+  document.getElementById('room-modal').classList.remove('hidden');
+  setMode(mode);
+}
+
+function closeModal() { document.getElementById('room-modal').classList.add('hidden'); }
+document.getElementById('room-modal').addEventListener('click', e => { if (e.target === document.getElementById('room-modal')) closeModal(); });
+
+function setMode(mode) {
+  rmMode = mode;
+  document.getElementById('tab-host').className = 'rm-tab' + (mode === 'host' ? ' host-a' : '');
+  document.getElementById('tab-join').className = 'rm-tab' + (mode === 'join' ? ' join-a' : '');
+  document.getElementById('host-panel').style.display = mode === 'host' ? '' : 'none';
+  document.getElementById('join-panel').style.display = mode === 'join' ? '' : 'none';
+  document.getElementById('rm-title').textContent = mode === 'host' ? 'Host a Room' : 'Join a Room';
 }
 
 function togglePw(id, icon) {
-  const input = document.getElementById(id);
-  if (!input) return;
-  if (input.type === 'password') { input.type = 'text'; icon.textContent = '🙈'; }
-  else { input.type = 'password'; icon.textContent = '👁'; }
+  const el = document.getElementById(id); if (!el) return;
+  el.type = el.type === 'password' ? 'text' : 'password';
+  icon.textContent = el.type === 'password' ? '👁' : '🙈';
+}
+
+// EMOJI PICKERS
+function pickEmoji(el, panel) {
+  if (panel === 'h') {
+    hEmoji = el.dataset.e;
+    document.querySelectorAll('#h-em-row .em-opt').forEach(e => e.classList.remove('sel')); el.classList.add('sel');
+    document.getElementById('h-em-text').value = hEmoji;
+  } else {
+    jEmoji = el.dataset.e;
+    document.querySelectorAll('#j-em-row .em-opt').forEach(e => e.classList.remove('sel')); el.classList.add('sel');
+    document.getElementById('j-em-text').value = jEmoji;
+  }
+}
+function onCustomEmoji(panel, input) {
+  const v = (input.value || '').trim();
+  if (!v) return;
+  if (panel === 'h') { hEmoji = v; document.querySelectorAll('#h-em-row .em-opt').forEach(e => e.classList.remove('sel')); }
+  else { jEmoji = v; document.querySelectorAll('#j-em-row .em-opt').forEach(e => e.classList.remove('sel')); }
+}
+function setJoinEmojiUI(emoji) {
+  jEmoji = emoji;
+  document.getElementById('j-em-text').value = emoji;
+  document.querySelectorAll('#j-em-row .em-opt').forEach(e => e.classList.toggle('sel', e.dataset.e === emoji));
 }
 
 // ══════════════════════════════════════════════════
-//  GROUP CRUD (Room-based)
+// HOST GROUP
 // ══════════════════════════════════════════════════
-function openCreateGroup() {
-  currentRoomMode = 'host';
-  document.getElementById('mg-name').value = '';
-  document.getElementById('mg-emoji').value = '🏖️';
-  document.getElementById('mg-host-pw').value = '';
-  document.getElementById('mg-host-pw').type = 'password';
-  document.getElementById('mg-edit-id').value = '';
-  document.getElementById('mg-host-code-display').style.display = 'none';
-  document.getElementById('mg-host-btn').style.display = '';
-  setRoomMode('host');
-  openModal('modal-group');
-}
+async function hostGroup() {
+  const name = (document.getElementById('h-name').value || '').trim();
+  const emoji = (document.getElementById('h-em-text').value || '').trim() || hEmoji || '🏘️';
+  const pw = (document.getElementById('h-pw').value || '').trim();
+  const editId = document.getElementById('h-edit-id').value;
+  if (!name) { toast('Please enter a group name', 'er'); return; }
+  if (!pw || pw.length < 3) { toast('Password must be at least 3 characters', 'er'); return; }
 
-function selectEmoji(e) {
-  mgSelectedEmoji = e;
-  document.getElementById('mg-emoji').value = e;
-}
-
-// ── HOST GROUP ──────────────────────────────────────
-function hostGroup() {
-  const name  = (document.getElementById('mg-name').value || '').trim();
-  const emoji = (document.getElementById('mg-emoji').value || '').trim() || '🏘️';
-  const pw    = (document.getElementById('mg-host-pw').value || '').trim();
-
-  if (!name) { showToast('Please enter a group name', 'error'); return; }
-  if (!pw || pw.length < 3) { showToast('Password must be at least 3 characters', 'error'); return; }
+  const u = ls('px_user') || {}; const me = u.name || 'Guest';
+  const btn = document.getElementById('h-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Creating room...';
 
   const groups = ls('px_groups') || [];
-
-  // Check password not already taken by another group
-  const conflict = groups.find(g => g.roomCode === pw);
-  if (conflict) {
-    showToast('That password is already used by another group — try a different one', 'error');
-    return;
-  }
-
-  const user   = ls('px_user') || {};
-  const myName = user.name || 'Guest';
-  const editId = document.getElementById('mg-edit-id').value;
-
   if (editId) {
-    // Edit existing
-    const idx = groups.findIndex(g => g.id === editId);
-    if (idx > -1) {
-      groups[idx].name     = name;
-      groups[idx].emoji    = emoji;
-      groups[idx].roomCode = pw;
-      if (!groups[idx].members.includes(myName)) groups[idx].members.unshift(myName);
-    }
-    lsSet('px_groups', groups);
-    showToast('Group updated!', 'success');
-    closeModal('modal-group');
-    renderGroups();
-    if (currentDetailGroupId === editId) renderGroupDetail(editId);
+    const idx = groups.findIndex(x => x.id === editId);
+    if (idx > -1) { groups[idx].name = name; groups[idx].emoji = emoji; groups[idx].password = pw; }
+    lsSave('px_groups', groups);
+    toast('Group updated!', 'ok'); closeModal(); renderGroups();
+    if (curDetailId === editId) renderDetail(editId);
     return;
   }
 
-  // New group
-  const newGroup = {
-    id:        uid(),
-    name,
-    emoji,
-    roomCode:  pw,
-    hostName:  myName,
-    members:   [myName],
-    createdAt: new Date().toISOString()
-  };
-  groups.push(newGroup);
-  lsSet('px_groups', groups);
+  try {
+    const cloudPayload = { name, emoji, password: pw, hostName: me, members: [me], expenses: [], createdAt: new Date().toISOString() };
+    const blobId = await cloudCreate(cloudPayload);
+    const ng = { id: uid(), name, emoji, blobId, hostName: me, members: [me], password: pw, createdAt: new Date().toISOString() };
+    groups.push(ng); lsSave('px_groups', groups);
 
-  // Show the room code and lock the form
-  document.getElementById('mg-host-code-value').textContent = pw;
-  document.getElementById('mg-host-code-display').style.display = '';
-  document.getElementById('mg-host-btn').style.display = 'none';
-  document.getElementById('mg-host-pw').disabled = true;
-  document.getElementById('mg-name').disabled    = true;
-  document.getElementById('mg-emoji').disabled   = true;
-
-  showToast('Room created! Share the password with your group 🎉', 'success');
-  renderGroups();
+    document.getElementById('h-code-val').textContent = blobId;
+    document.getElementById('h-code-box').style.display = '';
+    btn.style.display = 'none';
+    document.getElementById('h-pw').disabled = true;
+    document.getElementById('h-name').disabled = true;
+    document.getElementById('h-em-text').disabled = true;
+    toast('Room created & synced to cloud! ☁', 'ok');
+    renderGroups(); renderHome();
+  } catch (err) {
+    toast('Cloud unavailable — saved locally only', 'er');
+    const ng = { id: uid(), name, emoji, hostName: me, members: [me], password: pw, createdAt: new Date().toISOString() };
+    groups.push(ng); lsSave('px_groups', groups);
+    btn.disabled = false; btn.textContent = '🔑  HOST GROUP';
+    renderGroups(); renderHome();
+  }
 }
 
-function copyRoomCode() {
-  const code = document.getElementById('mg-host-code-value').textContent;
-  navigator.clipboard.writeText(code).then(() => showToast('Password copied!', 'success')).catch(() => {
-    showToast('Code: ' + code, '');
-  });
+function copyCode() {
+  const code = document.getElementById('h-code-val').textContent;
+  navigator.clipboard.writeText(code).then(() => toast('Room ID copied! Share it 🎉', 'ok')).catch(() => toast('ID: ' + code));
+}
+function shareWA() {
+  const code = document.getElementById('h-code-val').textContent;
+  const name = document.getElementById('h-name').value || 'our group';
+  const msg = 'Join our PhantoraX group "' + name + '"!\n\nRoom ID: ' + code + '\n\nOpen PhantoraX → Groups → Join a Room → paste Room ID → enter password I share separately.';
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
 }
 
-// ── JOIN GROUP ──────────────────────────────────────
-let joinLookupTimer = null;
-function liveJoinLookup() {
-  clearTimeout(joinLookupTimer);
-  joinLookupTimer = setTimeout(() => {
-    const pw = (document.getElementById('mg-join-pw').value || '').trim();
-    const previewEl = document.getElementById('mg-join-preview');
-    if (!pw) { previewEl.innerHTML = ''; return; }
+// ══════════════════════════════════════════════════
+// JOIN — LIVE LOOKUP
+// ══════════════════════════════════════════════════
+let lookupTimer = null;
+function onCodeInput() {
+  clearTimeout(lookupTimer);
+  const code = (document.getElementById('j-code').value || '').trim();
+  const status = document.getElementById('j-status');
+  const preview = document.getElementById('j-preview-area');
+  jFoundData = null;
+  if (!code) { status.textContent = ''; preview.style.display = 'none'; return; }
+  status.innerHTML = '<span class="spin"></span><span class="s-info">Looking up room...</span>';
+  lookupTimer = setTimeout(() => doLookup(code), 700);
+}
+
+async function doLookup(code) {
+  const status = document.getElementById('j-status');
+  const preview = document.getElementById('j-preview-area');
+  try {
+    const data = await cloudGet(code);
+    jFoundData = data;
+    status.innerHTML = '<span class="s-ok">✓ Room found!</span>';
+
+    // Auto-fill name + icon
+    document.getElementById('j-name').value = data.name || '';
+    setJoinEmojiUI(data.emoji || '🏖️');
+
+    // Build preview card
+    const u = ls('px_user') || {}; const me = u.name || 'Guest';
+    const mc = (data.members || []).length;
+    const alreadyIn = (data.members || []).includes(me);
+    document.getElementById('j-preview-card').innerHTML =
+      '<div class="jp-top"><div class="jp-emoji">' + (data.emoji || '🏘️') + '</div>' +
+      '<div><div class="jp-name">' + esc(data.name) + '</div>' +
+      '<div class="jp-meta">Hosted by <strong>' + esc(data.hostName || 'Unknown') + '</strong> &middot; ' + mc + ' member' + (mc !== 1 ? 's' : '') +
+      (alreadyIn ? '<br><span style="color:var(--warn);">⚠ You\'re already in this room</span>' : '') +
+      '</div></div></div>' +
+      '<div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:700;margin-bottom:6px;">Current Members</div>' +
+      '<div>' + (data.members || []).map(m => '<span class="member-chip">' + esc(m) + '</span>').join('') + '</div>';
+    preview.style.display = '';
+  } catch (e) {
+    jFoundData = null;
+    if (e.message === 'NOT_FOUND') status.innerHTML = '<span class="s-err">✗ No room found with this ID</span>';
+    else status.innerHTML = '<span class="s-err">✗ Could not connect — check your internet</span>';
+    preview.style.display = 'none';
+  }
+}
+
+// ══════════════════════════════════════════════════
+// JOIN GROUP
+// ══════════════════════════════════════════════════
+async function joinGroup() {
+  const code = (document.getElementById('j-code').value || '').trim();
+  const pw = (document.getElementById('j-pw').value || '').trim();
+  const localName = (document.getElementById('j-name').value || '').trim();
+  const localEmoji = (document.getElementById('j-em-text').value || '').trim() || jEmoji || '🏘️';
+
+  if (!code) { toast('Please enter a Room ID', 'er'); return; }
+  if (!jFoundData) { toast('Room not found or lookup still pending', 'er'); return; }
+  if (!pw) { toast('Please enter the room password', 'er'); return; }
+
+  const u = ls('px_user') || {}; const me = u.name || 'Guest';
+  const btn = document.getElementById('j-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Joining...';
+
+  try {
+    // Re-fetch fresh cloud data
+    const cloud = await cloudGet(code);
+
+    // Verify password
+    if (cloud.password !== pw) {
+      toast('Incorrect password — ask the host', 'er');
+      btn.disabled = false; btn.textContent = '🚪  JOIN GROUP'; return;
+    }
+
+    // Add member
+    if (!Array.isArray(cloud.members)) cloud.members = [];
+    if (!cloud.members.includes(me)) cloud.members.push(me);
+    await cloudPut(code, cloud);
+
+    // Save locally
     const groups = ls('px_groups') || [];
-    const found  = groups.find(g => g.roomCode === pw);
-    if (found) {
-      const user   = ls('px_user') || {};
-      const myName = user.name || 'Guest';
-      const alreadyIn = (found.members || []).includes(myName);
-      previewEl.innerHTML = `
-        <div class="join-preview">
-          <div class="join-preview-icon">${found.emoji || '🏘️'}</div>
-          <div>
-            <div class="join-preview-name">${escHtml(found.name)}</div>
-            <div class="join-preview-meta">
-              ${(found.members||[]).length} member${(found.members||[]).length!==1?'s':''} · Hosted by ${escHtml(found.hostName||'Unknown')}
-              ${alreadyIn ? ' · <span style="color:var(--warn);">You\'re already in this group</span>' : ''}
-            </div>
-          </div>
-        </div>`;
+    const existing = groups.find(x => x.blobId === code);
+    const finalName = localName || cloud.name;
+    const finalEmoji = localEmoji || cloud.emoji || '🏘️';
+
+    if (existing) {
+      existing.members = cloud.members; existing.name = finalName; existing.emoji = finalEmoji;
+      lsSave('px_groups', groups);
     } else {
-      previewEl.innerHTML = `
-        <div style="padding:10px 14px;background:rgba(255,56,96,0.08);border:1px solid rgba(255,56,96,0.2);
-          border-radius:var(--radius-sm);font-size:0.85rem;color:var(--danger);margin-top:8px;">
-          No room found with that password
-        </div>`;
+      const ng = { id: uid(), name: finalName, emoji: finalEmoji, blobId: code, hostName: cloud.hostName, members: cloud.members, createdAt: cloud.createdAt || new Date().toISOString() };
+      groups.push(ng); lsSave('px_groups', groups);
     }
-  }, 350);
-}
 
-function joinGroup() {
-  const pw = (document.getElementById('mg-join-pw').value || '').trim();
-  if (!pw) { showToast('Enter the room password', 'error'); return; }
+    // Pull expenses
+    const gId = (ls('px_groups') || []).find(x => x.blobId === code)?.id;
+    if (gId) {
+      let allExp = ls('px_expenses') || [];
+      allExp = allExp.filter(e => e.groupId !== gId);
+      const cexp = (cloud.expenses || []).map(e => ({ ...e, groupId: gId }));
+      allExp = [...allExp, ...cexp];
+      lsSave('px_expenses', allExp);
+    }
 
-  const groups  = ls('px_groups') || [];
-  const idx     = groups.findIndex(g => g.roomCode === pw);
-  if (idx === -1) { showToast('No group found with that password', 'error'); return; }
-
-  const user   = ls('px_user') || {};
-  const myName = user.name || 'Guest';
-
-  if ((groups[idx].members || []).includes(myName)) {
-    showToast(`You're already in "${groups[idx].name}"`, 'error');
-    closeModal('modal-group');
-    renderGroups();
-    return;
+    toast('Joined "' + (cloud.name || 'room') + '" successfully! 🚪', 'ok');
+    closeModal(); renderGroups(); renderHome();
+  } catch (e) {
+    if (e.message === 'NOT_FOUND') toast('Room no longer exists', 'er');
+    else toast('Join failed: ' + e.message, 'er');
+    btn.disabled = false; btn.textContent = '🚪  JOIN GROUP';
   }
-
-  if (!Array.isArray(groups[idx].members)) groups[idx].members = [];
-  groups[idx].members.push(myName);
-  lsSet('px_groups', groups);
-
-  showToast(`Joined "${groups[idx].name}" successfully! 🚪`, 'success');
-  closeModal('modal-group');
-  renderGroups();
 }
 
-// ── EDIT GROUP (re-open modal pre-filled) ──────────
+// ══════════════════════════════════════════════════
+// EDIT / LEAVE
+// ══════════════════════════════════════════════════
 function editGroup(id) {
   const groups = ls('px_groups') || [];
-  const g      = groups.find(g => g.id === id);
-  if (!g) return;
-
-  const user   = ls('px_user') || {};
-  const myName = user.name || 'Guest';
-  if (g.hostName && g.hostName !== myName) {
-    showToast('Only the group host can edit this room', 'error');
-    return;
-  }
-
-  document.getElementById('mg-name').value  = g.name  || '';
-  document.getElementById('mg-emoji').value = g.emoji || '🏖️';
-  document.getElementById('mg-host-pw').value    = g.roomCode || '';
-  document.getElementById('mg-host-pw').disabled = false;
-  document.getElementById('mg-name').disabled    = false;
-  document.getElementById('mg-emoji').disabled   = false;
-  document.getElementById('mg-edit-id').value    = id;
-  document.getElementById('mg-host-code-display').style.display = 'none';
-  document.getElementById('mg-host-btn').style.display = '';
-  document.getElementById('mg-host-btn').textContent   = '💾  SAVE CHANGES';
-  setRoomMode('host');
-
-  // Hide join tab while editing
-  document.getElementById('mg-btn-join').style.display = 'none';
-  openModal('modal-group');
+  const g = groups.find(x => x.id === id); if (!g) return;
+  const u = ls('px_user') || {}; const me = u.name || 'Guest';
+  if (g.hostName && g.hostName !== me) { toast('Only the host can edit', 'er'); return; }
+  document.getElementById('h-name').value = g.name || '';
+  document.getElementById('h-em-text').value = g.emoji || '🏖️';
+  hEmoji = g.emoji || '🏖️';
+  document.querySelectorAll('#h-em-row .em-opt').forEach(e => e.classList.toggle('sel', e.dataset.e === g.emoji));
+  document.getElementById('h-pw').value = g.password || '';
+  document.getElementById('h-pw').disabled = false;
+  document.getElementById('h-name').disabled = false;
+  document.getElementById('h-em-text').disabled = false;
+  document.getElementById('h-code-box').style.display = 'none';
+  document.getElementById('h-btn').style.display = '';
+  document.getElementById('h-btn').textContent = '💾  SAVE CHANGES';
+  document.getElementById('h-btn').disabled = false;
+  document.getElementById('h-edit-id').value = id;
+  document.getElementById('tab-join').style.display = 'none';
+  document.getElementById('room-modal').classList.remove('hidden');
+  setMode('host');
 }
 
-function deleteGroup(id) {
-  if (!confirm('Delete this group and all its expenses?')) return;
-  let groups   = ls('px_groups')   || [];
-  let expenses = ls('px_expenses') || [];
-  groups   = groups.filter(g => g.id !== id);
-  expenses = expenses.filter(e => e.groupId !== id);
-  lsSet('px_groups', groups);
-  lsSet('px_expenses', expenses);
-  showToast('Group deleted', 'error');
-  goView('groups');
+function leaveGroup(id) {
+  if (!confirm('Remove this group from your device?')) return;
+  let groups = ls('px_groups') || [];
+  let exps = ls('px_expenses') || [];
+  groups = groups.filter(x => x.id !== id);
+  exps = exps.filter(e => e.groupId !== id);
+  lsSave('px_groups', groups); lsSave('px_expenses', exps);
+  toast('Removed from your device', 'er'); goView('groups');
 }
 
 // ══════════════════════════════════════════════════
-//  ADD EXPENSE VIEW
+// ADD EXPENSE
 // ══════════════════════════════════════════════════
 function renderAddExpense() {
   const groups = ls('px_groups') || [];
   const sel = document.getElementById('ae-group');
   sel.innerHTML = groups.length
-    ? groups.map(g => `<option value="${g.id}">${escHtml(g.emoji||'🏘️')} ${escHtml(g.name)}</option>`).join('')
-    : `<option value="">No groups yet</option>`;
+    ? groups.map(g => '<option value="' + g.id + '">' + esc(g.emoji || '🏘️') + ' ' + esc(g.name) + '</option>').join('')
+    : '<option value="">No groups — host or join one first</option>';
   onGroupChange();
 }
 
 function onGroupChange() {
   const groups = ls('px_groups') || [];
   const id = document.getElementById('ae-group').value;
-  const g = groups.find(g => g.id === id);
-  const members = g ? (g.members || []) : [];
-  const user = ls('px_user') || {};
-  const myName = user.name || 'Guest';
-
-  // Paid by
-  const paidSel = document.getElementById('ae-paidby');
-  paidSel.innerHTML = members.map(m =>
-    `<option value="${escAttr(m)}" ${m===myName?'selected':''}>${escHtml(m)}</option>`
-  ).join('');
-
-  // Split members — select all by default
-  selectedSplitMembers = [...members];
-  renderSplitMembers(members);
-  updateSplitInputs();
+  const g = groups.find(x => x.id === id);
+  const mem = g ? (g.members || []) : [];
+  const u = ls('px_user') || {}; const me = u.name || 'Guest';
+  document.getElementById('ae-paidby').innerHTML = mem.map(m => '<option value="' + esc(m) + '"' + (m === me ? ' selected' : '') + '>' + esc(m) + '</option>').join('');
+  splitMembers = [...mem];
+  renderSplitChips(mem); updateSplitInputs();
 }
 
-function renderSplitMembers(members) {
-  const el = document.getElementById('ae-split-members');
-  el.innerHTML = members.map(m =>
-    `<div class="chip ${selectedSplitMembers.includes(m)?'selected':''}" onclick="toggleSplitMember('${escAttr(m)}')">${escHtml(m)}</div>`
+function renderSplitChips(mem) {
+  document.getElementById('ae-members').innerHTML = mem.map(m =>
+    '<div class="chip' + (splitMembers.includes(m) ? ' sel' : '') + '" onclick="toggleChip(\'' + ea(m) + '\')">' + esc(m) + '</div>'
   ).join('');
 }
 
-function toggleSplitMember(name) {
-  if (selectedSplitMembers.includes(name)) {
-    if (selectedSplitMembers.length === 1) { showToast('At least one person must be included', 'error'); return; }
-    selectedSplitMembers = selectedSplitMembers.filter(m => m !== name);
-  } else {
-    selectedSplitMembers.push(name);
-  }
+function toggleChip(name) {
+  if (splitMembers.includes(name)) {
+    if (splitMembers.length === 1) { toast('At least one person required', 'er'); return; }
+    splitMembers = splitMembers.filter(m => m !== name);
+  } else { splitMembers.push(name); }
   const groups = ls('px_groups') || [];
-  const id = document.getElementById('ae-group').value;
-  const g = groups.find(g => g.id === id);
-  renderSplitMembers(g ? g.members : []);
-  updateSplitInputs();
-  updateSplitPreview();
+  const g = groups.find(x => x.id === document.getElementById('ae-group').value);
+  renderSplitChips(g ? g.members : []);
+  updateSplitInputs(); updateSplitPreview();
 }
 
 function setSplitType(type, el) {
-  currentSplitType = type;
+  splitType = type;
   document.querySelectorAll('#view-add-expense .tab-bar .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
-  updateSplitInputs();
-  updateSplitPreview();
+  updateSplitInputs(); updateSplitPreview();
 }
 
 function updateSplitInputs() {
   const el = document.getElementById('ae-split-inputs');
-  if (currentSplitType === 'equal') { el.innerHTML = ''; return; }
-
-  el.innerHTML = selectedSplitMembers.map(m => {
-    const unit = currentSplitType === 'percentage' ? '%' : '₹';
-    const val = (customSplits[m] || '');
-    return `
-      <div class="split-row">
-        <div class="split-name">${escHtml(m)}</div>
-        <div class="split-input-wrap">
-          <input class="split-input" type="number" min="0" step="0.01" placeholder="0"
-            value="${val}" oninput="setSplitVal('${escAttr(m)}',this.value)" id="split_${cssId(m)}"/>
-          <div class="split-unit">${unit}</div>
-        </div>
-      </div>`;
-  }).join('');
+  if (splitType === 'equal') { el.innerHTML = ''; return; }
+  el.innerHTML = splitMembers.map(m =>
+    '<div class="split-row"><div style="font-weight:600;">' + esc(m) + '</div><div style="display:flex;align-items:center;gap:6px;"><input class="split-inp" type="number" min="0" step="0.01" placeholder="0" value="' + (customSplits[m] || '') + '" oninput="setSV(\'' + ea(m) + '\',this.value)"/><div style="color:var(--text3);font-size:.8rem;width:20px;">' + (splitType === 'percentage' ? '%' : '₹') + '</div></div></div>'
+  ).join('');
 }
 
-function setSplitVal(name, val) {
-  customSplits[name] = val;
-  updateSplitPreview();
-}
+function setSV(name, val) { customSplits[name] = val; updateSplitPreview(); }
 
 function updateSplitPreview() {
-  const amount = parseFloat(document.getElementById('ae-amount').value) || 0;
-  const sumEl = document.getElementById('ae-split-summary');
-  if (!amount) { sumEl.textContent = ''; return; }
-
-  if (currentSplitType === 'equal') {
-    const share = amount / (selectedSplitMembers.length || 1);
-    sumEl.textContent = `Each person pays: ₹${fmtNum(share)}`;
-  } else if (currentSplitType === 'custom') {
-    const sum = selectedSplitMembers.reduce((s,m) => s + (parseFloat(customSplits[m])||0), 0);
-    const diff = amount - sum;
-    const ok = Math.abs(diff) < 0.01;
-    sumEl.innerHTML = `Total assigned: ₹${fmtNum(sum)} / ₹${fmtNum(amount)} ${ok ? '<span style="color:var(--accent3);">✓</span>' : `<span style="color:var(--danger);">Diff: ${diff > 0 ? '+' : ''}${fmtNum(diff)}</span>`}`;
+  const a = parseFloat(document.getElementById('ae-amount').value) || 0;
+  const el = document.getElementById('ae-split-sum');
+  if (!a) { el.textContent = ''; return; }
+  if (splitType === 'equal') { el.textContent = 'Each pays: ₹' + fmtN(a / splitMembers.length); }
+  else if (splitType === 'custom') {
+    const sum = splitMembers.reduce((s, m) => s + (parseFloat(customSplits[m]) || 0), 0);
+    const d = a - sum; const ok = Math.abs(d) < 0.01;
+    el.innerHTML = 'Total: ₹' + fmtN(sum) + ' / ₹' + fmtN(a) + ' ' + (ok ? '<span style="color:var(--accent3);">✓</span>' : '<span style="color:var(--danger);">Diff: ' + (d > 0 ? '+' : '') + fmtN(d) + '</span>');
   } else {
-    const sum = selectedSplitMembers.reduce((s,m) => s + (parseFloat(customSplits[m])||0), 0);
-    const ok = Math.abs(sum - 100) < 0.1;
-    sumEl.innerHTML = `Total: ${fmtNum(sum)}% / 100% ${ok ? '<span style="color:var(--accent3);">✓</span>' : `<span style="color:var(--danger);">Need 100%</span>`}`;
+    const sum = splitMembers.reduce((s, m) => s + (parseFloat(customSplits[m]) || 0), 0);
+    el.innerHTML = 'Total: ' + fmtN(sum) + '% / 100% ' + (Math.abs(sum - 100) < 0.1 ? '<span style="color:var(--accent3);">✓</span>' : '<span style="color:var(--danger);">Need 100%</span>');
   }
 }
 
-function saveExpense() {
+async function saveExpense() {
   const groupId = document.getElementById('ae-group').value;
-  if (!groupId) { showToast('Please create a group first', 'error'); return; }
+  if (!groupId) { toast('No group selected', 'er'); return; }
   const desc = (document.getElementById('ae-desc').value || '').trim();
-  if (!desc) { showToast('Please enter a description', 'error'); return; }
+  if (!desc) { toast('Enter a description', 'er'); return; }
   const amount = parseFloat(document.getElementById('ae-amount').value);
-  if (!amount || amount <= 0) { showToast('Please enter a valid amount', 'error'); return; }
+  if (!amount || amount <= 0) { toast('Enter a valid amount', 'er'); return; }
   const paidBy = document.getElementById('ae-paidby').value;
-  const category = document.getElementById('ae-category').value;
-  if (!paidBy) { showToast('Please select who paid', 'error'); return; }
-  if (!selectedSplitMembers.length) { showToast('Please select at least one person to split with', 'error'); return; }
+  if (!paidBy) { toast('Select who paid', 'er'); return; }
+  if (!splitMembers.length) { toast('Select at least one person', 'er'); return; }
+  const cat = document.getElementById('ae-cat').value;
 
-  // Compute splits object
   const splits = {};
-  if (currentSplitType === 'equal') {
-    const share = amount / selectedSplitMembers.length;
-    selectedSplitMembers.forEach(m => splits[m] = parseFloat(fmtNum(share)));
-  } else if (currentSplitType === 'custom') {
-    let sum = 0;
-    selectedSplitMembers.forEach(m => { splits[m] = parseFloat(customSplits[m])||0; sum += splits[m]; });
-    if (Math.abs(sum - amount) > 0.01) { showToast(`Custom amounts must sum to ₹${fmtNum(amount)}`, 'error'); return; }
+  if (splitType === 'equal') {
+    const share = amount / splitMembers.length;
+    splitMembers.forEach(m => splits[m] = parseFloat(fmtN(share)));
+  } else if (splitType === 'custom') {
+    let sum = 0; splitMembers.forEach(m => { splits[m] = parseFloat(customSplits[m]) || 0; sum += splits[m]; });
+    if (Math.abs(sum - amount) > 0.01) { toast('Amounts must sum to ₹' + fmtN(amount), 'er'); return; }
   } else {
-    let sum = 0;
-    selectedSplitMembers.forEach(m => { splits[m] = parseFloat(customSplits[m])||0; sum += splits[m]; });
-    if (Math.abs(sum - 100) > 0.1) { showToast('Percentages must sum to 100%', 'error'); return; }
-    selectedSplitMembers.forEach(m => splits[m] = parseFloat(fmtNum((splits[m]/100)*amount)));
+    let sum = 0; splitMembers.forEach(m => { splits[m] = parseFloat(customSplits[m]) || 0; sum += splits[m]; });
+    if (Math.abs(sum - 100) > 0.1) { toast('Percentages must sum to 100%', 'er'); return; }
+    splitMembers.forEach(m => splits[m] = parseFloat(fmtN((splits[m] / 100) * amount)));
   }
 
-  const expenses = ls('px_expenses') || [];
-  expenses.push({ id: uid(), groupId, description: desc, amount, paidBy, splitType: currentSplitType, splits, category, createdAt: new Date().toISOString() });
-  lsSet('px_expenses', expenses);
+  const exp = { id: uid(), groupId, desc, amount, paidBy, splitType, splits, cat, createdAt: new Date().toISOString() };
+  const exps = ls('px_expenses') || []; exps.push(exp); lsSave('px_expenses', exps);
 
-  // Reset form
+  const groups = ls('px_groups') || [];
+  const g = groups.find(x => x.id === groupId);
+  if (g && g.blobId) {
+    const btn = document.getElementById('ae-save-btn');
+    btn.textContent = 'Syncing...'; btn.disabled = true;
+    try {
+      const cloud = await cloudGet(g.blobId);
+      if (!Array.isArray(cloud.expenses)) cloud.expenses = [];
+      const ce = { ...exp }; delete ce.groupId;
+      cloud.expenses.push(ce); await cloudPut(g.blobId, cloud);
+      toast('Expense saved & synced ☁', 'ok');
+    } catch { toast('Saved locally — sync later via Sync button', 'er'); }
+    finally { btn.textContent = 'Save Expense'; btn.disabled = false; }
+  } else { toast('Expense saved! 💰', 'ok'); }
+
   document.getElementById('ae-desc').value = '';
   document.getElementById('ae-amount').value = '';
   customSplits = {};
   document.getElementById('ae-split-inputs').innerHTML = '';
-  document.getElementById('ae-split-summary').textContent = '';
-
-  showToast('Expense saved! 💰', 'success');
+  document.getElementById('ae-split-sum').textContent = '';
   goView('home');
 }
 
 // ══════════════════════════════════════════════════
-//  DELETE EXPENSE
+// DELETE EXPENSE
 // ══════════════════════════════════════════════════
-function deleteExpense(expId, groupId) {
+async function delExp(expId, groupId) {
   if (!confirm('Delete this expense?')) return;
-  let expenses = ls('px_expenses') || [];
-  expenses = expenses.filter(e => e.id !== expId);
-  lsSet('px_expenses', expenses);
-  showToast('Expense deleted', 'error');
-  renderGroupDetail(groupId);
+  let exps = ls('px_expenses') || [];
+  exps = exps.filter(e => e.id !== expId); lsSave('px_expenses', exps);
+  const groups = ls('px_groups') || [];
+  const g = groups.find(x => x.id === groupId);
+  if (g && g.blobId) {
+    try {
+      const cloud = await cloudGet(g.blobId);
+      if (Array.isArray(cloud.expenses)) { cloud.expenses = cloud.expenses.filter(e => e.id !== expId); await cloudPut(g.blobId, cloud); }
+    } catch {}
+  }
+  toast('Expense deleted', 'er'); renderDetail(groupId);
 }
 
 // ══════════════════════════════════════════════════
-//  PROFILE
+// PROFILE
 // ══════════════════════════════════════════════════
 function renderProfile() {
-  const user = ls('px_user') || {};
-  document.getElementById('pf-name').value = user.name || '';
-  document.getElementById('pf-about').value = user.about || '';
-  document.getElementById('pf-notes').value = user.notes || '';
-
-  document.getElementById('profile-name-display').textContent = user.name || 'Guest';
-  document.getElementById('profile-since-display').textContent = user.joinedAt ? 'Member since ' + new Date(user.joinedAt).toLocaleDateString('en-IN', {year:'numeric',month:'long'}) : '';
-
-  // Avatar
-  const initEl = document.getElementById('profile-initials');
-  const photoEl = document.getElementById('profile-photo-preview');
-  if (user.photo) {
-    photoEl.src = user.photo; photoEl.style.display = ''; initEl.style.display = 'none';
-  } else {
-    photoEl.style.display = 'none'; initEl.style.display = '';
-    initEl.textContent = (user.name || 'G').charAt(0).toUpperCase();
-  }
-
-  // Links
-  const links = user.links || ['','','','',''];
-  document.getElementById('pf-links-list').innerHTML = [0,1,2,3,4].map(i => `
-    <div class="link-row">
-      <input type="url" class="form-input" id="pf-link-${i}" placeholder="https://..." value="${escHtml(links[i]||'')}"/>
-    </div>`).join('');
+  const u = ls('px_user') || {};
+  document.getElementById('pf-name').value = u.name || '';
+  document.getElementById('pf-about').value = u.about || '';
+  document.getElementById('pf-notes').value = u.notes || '';
+  document.getElementById('prof-name-disp').textContent = u.name || 'Guest';
+  document.getElementById('prof-since').textContent = u.joinedAt ? 'Member since ' + new Date(u.joinedAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' }) : '';
+  const ph = document.getElementById('prof-photo'), pi = document.getElementById('prof-init');
+  if (u.photo) { ph.src = u.photo; ph.style.display = ''; pi.style.display = 'none'; }
+  else { ph.style.display = 'none'; pi.style.display = ''; pi.textContent = (u.name || 'G').charAt(0).toUpperCase(); }
+  const links = u.links || ['', '', '', '', ''];
+  document.getElementById('pf-links').innerHTML = [0, 1, 2, 3, 4].map(i =>
+    '<div style="margin-bottom:8px;"><input class="fi" type="url" id="pl' + i + '" placeholder="https://..." value="' + esc(links[i] || '') + '"/></div>'
+  ).join('');
 }
-
-function triggerPhotoUpload() { document.getElementById('photo-upload').click(); }
-
-function handlePhotoUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  if (file.size > 2*1024*1024) { showToast('Photo must be under 2MB', 'error'); return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    const user = ls('px_user') || {};
-    user.photo = e.target.result;
-    lsSet('px_user', user);
-    renderProfile();
-    renderTopbarAvatar();
-    showToast('Photo updated!', 'success');
-  };
-  reader.readAsDataURL(file);
+function handlePhoto(ev) {
+  const f = ev.target.files[0]; if (!f) return;
+  if (f.size > 2 * 1024 * 1024) { toast('Photo must be < 2MB', 'er'); return; }
+  const r = new FileReader(); r.onload = e => { const u = ls('px_user') || {}; u.photo = e.target.result; lsSave('px_user', u); renderProfile(); renderAv(); toast('Photo updated!', 'ok'); }; r.readAsDataURL(f);
 }
-
 function saveProfile() {
   const name = (document.getElementById('pf-name').value || '').trim() || 'Guest';
   const about = (document.getElementById('pf-about').value || '').trim();
   const notes = (document.getElementById('pf-notes').value || '').trim();
-  const links = [0,1,2,3,4].map(i => (document.getElementById(`pf-link-${i}`)?.value||'').trim());
-
-  const user = ls('px_user') || {};
-  user.name = name; user.about = about; user.notes = notes; user.links = links;
-  lsSet('px_user', user);
-  renderTopbarAvatar();
-  renderProfile();
-  showToast('Profile saved! ✓', 'success');
+  const links = [0, 1, 2, 3, 4].map(i => (document.getElementById('pl' + i)?.value || '').trim());
+  const u = ls('px_user') || {}; u.name = name; u.about = about; u.notes = notes; u.links = links;
+  lsSave('px_user', u); renderAv(); renderProfile(); toast('Profile saved! ✓', 'ok');
 }
 
 // ══════════════════════════════════════════════════
-//  DATA MANAGEMENT
+// DATA
 // ══════════════════════════════════════════════════
 function exportData() {
-  const data = {
-    user: ls('px_user'),
-    groups: ls('px_groups') || [],
-    expenses: ls('px_expenses') || [],
-    exportedAt: new Date().toISOString()
-  };
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url;
-  a.download = 'phantorax-data-' + new Date().toISOString().split('T')[0] + '.json';
-  a.click(); URL.revokeObjectURL(url);
-  showToast('Data exported!', 'success');
+  const d = { user: ls('px_user'), groups: ls('px_groups') || [], expenses: ls('px_expenses') || [], at: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'phantorax-' + new Date().toISOString().split('T')[0] + '.json'; a.click();
+  toast('Exported!', 'ok');
 }
-
-function confirmClearData() {
-  if (!confirm('This will delete ALL your groups, expenses, and profile data. Are you sure?')) return;
-  if (!confirm('Last chance — this cannot be undone!')) return;
-  ['px_user','px_groups','px_expenses'].forEach(k => localStorage.removeItem(k));
-  showToast('All data cleared', 'error');
-  setTimeout(() => location.reload(), 1000);
+function clearData() {
+  if (!confirm('Clear all local data?')) return;
+  ['px_user', 'px_groups', 'px_expenses'].forEach(k => localStorage.removeItem(k));
+  toast('Cleared', 'er'); setTimeout(() => location.reload(), 1000);
 }
 
 // ══════════════════════════════════════════════════
-//  MODAL HELPERS
+// INIT
 // ══════════════════════════════════════════════════
-function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-function closeModal(id) {
-  document.getElementById(id).classList.add('hidden');
-  // Reset group modal state
-  if (id === 'modal-group') {
-    const hostBtn = document.getElementById('mg-host-btn');
-    if (hostBtn) { hostBtn.style.display = ''; hostBtn.textContent = '🔑  HOST GROUP'; }
-    const pw   = document.getElementById('mg-host-pw');
-    const name = document.getElementById('mg-name');
-    const emj  = document.getElementById('mg-emoji');
-    if (pw)   { pw.disabled = false; pw.type = 'password'; }
-    if (name) name.disabled = false;
-    if (emj)  emj.disabled  = false;
-    const joinTab = document.getElementById('mg-btn-join');
-    if (joinTab) joinTab.style.display = '';
-    document.getElementById('mg-host-code-display').style.display = 'none';
-  }
-}
-document.querySelectorAll('.modal-overlay').forEach(o => {
-  o.addEventListener('click', e => { if (e.target === o) o.classList.add('hidden'); });
-});
-
-// ══════════════════════════════════════════════════
-//  UTILS
-// ══════════════════════════════════════════════════
-function escHtml(s) {
-  if (s === null || s === undefined) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function escAttr(s) {
-  if (s === null || s === undefined) return '';
-  return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;');
-}
-function cssId(s) { return (s||'').replace(/[^a-zA-Z0-9]/g,'_'); }
-
-// ══════════════════════════════════════════════════
-//  PROFILE LINKS INITIALIZATION
-// ══════════════════════════════════════════════════
-function ensureUserLinks() {
-  const user = ls('px_user') || {};
-  if (!Array.isArray(user.links)) { user.links = ['','','','','']; lsSet('px_user', user); }
-}
-
-// ══════════════════════════════════════════════════
-//  BOOT
-// ══════════════════════════════════════════════════
-ensureUserLinks();
+(function() { const u = ls('px_user') || {}; if (!Array.isArray(u.links)) { u.links = ['', '', '', '', '']; lsSave('px_user', u); } })();
 init();
 </script>
 </body>
